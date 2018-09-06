@@ -38,18 +38,18 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 # Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
 $Months_Days = @{
-    # January = 31
-    Febuary = 5
-    # March = 31
-    # April = 30
-    # May = 31
-    # June = 30
-    # July = 31
-    # August = 31
-    # September = 30
-    # October = 31
-    # November = 30
-    # December = 31
+    January = 31
+    Febuary = 28
+    March = 31
+    April = 30
+    May = 31
+    June = 30
+    July = 31
+    August = 31
+    September = 30
+    October = 31
+    November = 30
+    December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -86,8 +86,8 @@ if (-Not (Test-Path $Save_Directory)) {
     New-Item -ItemType Directory -Path $Save_Directory
 }
 
-# Add a workbook to the Excel instance we made and then for each day in the range of 1 to 27 make a sheet inside that workbook.
-# We do 1 to 27 because the new workbook starts with one empty sheet and when we're done that'd be a total of 28 sheets which
+# Add a workbook to the Excel instance we made and then for each day in the range of 1 to 28 (days in Febuary) make a sheet inside that workbook.
+# We do a range of 1 to 28 minus 1 because the new workbook starts with one empty sheet and when we're done that'd be a total of 28 sheets which
 # makes up the base of our template because 28 days is the lowest number of days we'd need, i.e. Febuary.
 $Workbook = $Excel_Instance.Workbooks.Add()
 ForEach ($Day in 1..$($Months_Days['Febuary'] - 1)) {
@@ -98,17 +98,20 @@ $Temp_Workbook = Join-Path -Path $Work_Directory -ChildPath "Temp Workbook.xlsx"
 $Workbook.SaveAs($Temp_Workbook, $Excel_Format)
 $Workbook.Close()
 
-# Build each monthly workbook
+# Begin building each monthly workbook
 ForEach ($Items in $Months_Days.GetEnumerator()) {
     $Month = $Items.Key
     $Days = $Items.Value
+    # Open the template workbook we made earlier
     $Workbook = $Excel_Instance.Workbooks.Open($Temp_Workbook)
     $Missing_Sheets = $Days - $Workbook.Worksheets.Count
+    # For each missing sheet, based on the number of days in the currently selected month, add a new sheet at the end of any current sheets
     if ($Missing_Sheets -ge 1) {
         ForEach ($Missing_Sheet in 1..$Missing_Sheets) {
             $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
         }
     }
+    # For each day (sheet) in the workbook set conditional formatting for each day.
     ForEach ($Day in 1..$Days) {
         (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, 'aa')
         (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Interior.Color = $LimeGreen
@@ -149,6 +152,7 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
         ForEach ($Letter in $A_To_K) {
             ($Workbook.Worksheets.Item($Day)).Columns("$Letter").HorizontalAlignment = -4108
         }
+        # Name each sheet based on the currently selected month in short form and add the day on the end.
         $Workbook.Worksheets.Item($Day).Name = "$(
             if ($Month -eq 'September') {
                 $Month.SubString(0,4)
@@ -157,6 +161,7 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
             }
         )-$Day"
     }
+    # Save newly created workbook, if the $Year variable has been set then pull it, and then close it.
     $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
     $Workbook.Close()
 }
@@ -164,6 +169,7 @@ $Excel_Instance.Quit()
 
 
 if ($ConfirmSave) {
+    # If $ConfirmSave has been set check for valid directories and if they're usable or would create any type of file conflicts. Create directory if needed.
     if (Test-Path $Move_To_Directory) {
         if (Test-Path -PathType Container $Move_To_Directory) {
             if (((Get-ChildItem $Move_To_Directory -Recurse | Measure-Object).Count) -ge 1) {
@@ -183,6 +189,7 @@ if ($ConfirmSave) {
         New-Item -ItemType Directory -Path $Move_To_Directory
     }
 } else {
+    # If $ConfirmSave not set then confirm $Move_To_Directory or request a new one and confirm that it is usable.
     do {
         $Confirm_Move_To_Directory = Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)"
         if (-not ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")) {
@@ -210,6 +217,7 @@ if ($ConfirmSave) {
     }
 }
 
+# Move saved Excel files to final directory, remove work directory, and open the final directory for viewing.
 Get-ChildItem -Path $Save_Directory | Move-Item -Force -Destination $Move_To_Directory
 Get-ChildItem $Work_Directory -Recurse | Remove-Item -Recurse -Force
 Remove-Item $Work_Directory -Recurse -Force
