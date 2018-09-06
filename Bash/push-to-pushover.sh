@@ -2,6 +2,8 @@
 
 # Push notifications to pushover
 
+# I can't remember who I sourced this from
+
 if [ $# -eq 0 ]; then
 	echo "Usage: ./pushover <message> [title]"
 	exit
