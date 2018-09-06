@@ -187,9 +187,14 @@ if ($ConfirmSave) {
                 New-Item -ItemType Directory -Path $Move_To_Directory
             }
         } else {
-            Get-ChildItem $Move_To_Directory -Recurse | Remove-Item -Recurse -Force
-            Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
-            New-Item -ItemType Directory -Path $Move_To_Directory
+            try {
+                Get-ChildItem $Move_To_Directory -Recurse | Remove-Item -Recurse -Force
+            } catch [System.Management.Automation.ItemNotFoundException] {
+                Write-Verbose "Directory $($_.TargetObject) not found!" -Verbose
+            } finally {
+                Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
+                New-Item -ItemType Directory -Path $Move_To_Directory
+            }
         }
     } else {
         New-Item -ItemType Directory -Path $Move_To_Directory
