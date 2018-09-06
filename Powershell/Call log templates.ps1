@@ -22,12 +22,6 @@ $Between_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::
 $Cell_Value_Condition = [Microsoft.Office.Interop.Excel.XlFormatConditionType]::xlCellValue
 $Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlEqual
 $Excel_Format = [Microsoft.Office.Interop.Excel.XlFileFormat]::xlWorkbookDefault
-$Excel_Instance = New-Object -ComObject Excel.Application
-$Excel_Instance.Visible = $False
-$Excel_Instance.DisplayAlerts = $False
-$Excel_Instance.ScreenUpdating = $False
-$Excel_Instance.UserControl = $False
-$Excel_Instance.Interactive = $False
 $Not_Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlNotEqual
 
 # Excel ComObject Colors
@@ -86,87 +80,99 @@ if (-Not (Test-Path $Save_Directory)) {
     New-Item -ItemType Directory -Path $Save_Directory
 }
 
-# Add a workbook to the Excel instance we made and then for each day in the range of 1 to 28 (days in Febuary) make a sheet inside that workbook.
-# We do a range of 1 to 28 minus 1 because the new workbook starts with one empty sheet and when we're done that'd be a total of 28 sheets which
-# makes up the base of our template because 28 days is the lowest number of days we'd need, i.e. Febuary.
-$Workbook = $Excel_Instance.Workbooks.Add()
-ForEach ($Day in 1..$($Months_Days['Febuary'] - 1)) {
-    $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
-}
-# A variable is set for the path to the new template workbook, it is then saved and closed.
-$Temp_Workbook = Join-Path -Path $Work_Directory -ChildPath "Temp Workbook.xlsx"
-$Workbook.SaveAs($Temp_Workbook, $Excel_Format)
-$Workbook.Close()
+try {
+    # Create Excel instance and set it to be hidden and disallow user interaction.
+    $Excel_Instance = New-Object -ComObject Excel.Application
+    $Excel_Instance.Visible = $False
+    $Excel_Instance.DisplayAlerts = $False
+    $Excel_Instance.ScreenUpdating = $False
+    $Excel_Instance.UserControl = $False
+    $Excel_Instance.Interactive = $False
 
-# Begin building each monthly workbook
-ForEach ($Items in $Months_Days.GetEnumerator()) {
-    $Month = $Items.Key
-    $Days = $Items.Value
-    # Open the template workbook we made earlier
-    $Workbook = $Excel_Instance.Workbooks.Open($Temp_Workbook)
-    $Missing_Sheets = $Days - $Workbook.Worksheets.Count
-    # For each missing sheet, based on the number of days in the currently selected month, add a new sheet at the end of any current sheets
-    if ($Missing_Sheets -ge 1) {
-        ForEach ($Missing_Sheet in 1..$Missing_Sheets) {
-            $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
-        }
+    # Add a workbook to the Excel instance we made and for each day in Febuary make a sheet inside that workbook.
+    # We do a range of the days in Febuary minus 1 because the new workbook starts with one empty sheet and
+    # when we're done that'd be a total of 28 sheets which makes up the base of our template because 28 days is
+    # the lowest number of days we'd need, i.e. Febuary.
+    $Workbook = $Excel_Instance.Workbooks.Add()
+    ForEach ($Day in 1..$($Months_Days['Febuary'] - 1)) {
+        $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
     }
-    # For each day (sheet) in the workbook set conditional formatting for each day.
-    ForEach ($Day in 1..$Days) {
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, 'aa')
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Interior.Color = $LimeGreen
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.ColorIndex = 1
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.Bold = $True
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Not_Equal_Operator, '=ISTEXT(f4:f999)')
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $RoyalBlue
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.ColorIndex = 1
-        (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.Bold = $True
-        $Count = 1
-        ForEach ($Items in $Values_Colors.GetEnumerator()) {
-            $Cell_Value = $Items.Key
-            $Color = $Items.Value
-            (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, $Cell_Value)
-            (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Interior.Color = $Color
-            (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Font.ColorIndex = 1
-            (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Font.Bold = $True
-            $Count++
-        }
-        (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Add($Cell_Value_Condition, $Between_Operator, 1, 9999999999)
-        (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Item(1).Interior.ColorIndex = 1
-        (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Item(1).Font.ColorIndex = 2
-        ($Workbook.Worksheets.Item($Day)).Columns('a').NumberFormat = "[$-x-systime]h:mm:ss AM/PM"
-        ($Workbook.Worksheets.Item($Day)).Columns('e').NumberFormat = "[<=9999999]###-####;(###) ###-####"
-        ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1) = 'CALL LOG'
-        ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1).Font.Bold = $True
-        $Count = 1
-        ForEach ($Items in $Titles_Widths.GetEnumerator()) {
-            $Title = $Items.Key
-            $Width = $Items.Value
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count) = $Title
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).ColumnWidth = $Width
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Interior.ColorIndex = 1
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Font.ColorIndex = 2
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(3,$Count).Interior.ColorIndex = 6
-            $Count++
-        }
-        ForEach ($Letter in $A_To_K) {
-            ($Workbook.Worksheets.Item($Day)).Columns("$Letter").HorizontalAlignment = -4108
-        }
-        # Name each sheet based on the currently selected month in short form and add the day on the end.
-        $Workbook.Worksheets.Item($Day).Name = "$(
-            if ($Month -eq 'September') {
-                $Month.SubString(0,4)
-            } else {
-                $Month.SubString(0,3)
-            }
-        )-$Day"
-    }
-    # Save newly created workbook, if the $Year variable has been set then pull it, and then close it.
-    $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
+    # A variable is set for the path to the new template workbook, it is then saved and closed.
+    $Temp_Workbook = Join-Path -Path $Work_Directory -ChildPath "Temp Workbook.xlsx"
+    $Workbook.SaveAs($Temp_Workbook, $Excel_Format)
     $Workbook.Close()
-}
-$Excel_Instance.Quit()
 
+    # Begin building each monthly workbook
+    ForEach ($Items in $Months_Days.GetEnumerator()) {
+        $Month = $Items.Key
+        $Days = $Items.Value
+        # Open the template workbook we made earlier
+        $Workbook = $Excel_Instance.Workbooks.Open($Temp_Workbook)
+        $Missing_Sheets = $Days - $Workbook.Worksheets.Count
+        # For each missing sheet, based on the number of days in the currently selected month, add a new sheet at the end of any current sheets
+        if ($Missing_Sheets -ge 1) {
+            ForEach ($Missing_Sheet in 1..$Missing_Sheets) {
+                $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
+            }
+        }
+        # For each day (sheet) in the workbook set conditional formatting for each day.
+        ForEach ($Day in 1..$Days) {
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, 'aa')
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Interior.Color = $LimeGreen
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.ColorIndex = 1
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.Bold = $True
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Not_Equal_Operator, '=ISTEXT(f4:f999)')
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $RoyalBlue
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.ColorIndex = 1
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.Bold = $True
+            $Count = 1
+            ForEach ($Items in $Values_Colors.GetEnumerator()) {
+                $Cell_Value = $Items.Key
+                $Color = $Items.Value
+                (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, $Cell_Value)
+                (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Interior.Color = $Color
+                (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Font.ColorIndex = 1
+                (($Workbook.Worksheets.Item($Day)).Range('g4:g999')).FormatConditions.Item($Count).Font.Bold = $True
+                $Count++
+            }
+            (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Add($Cell_Value_Condition, $Between_Operator, 1, 9999999999)
+            (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Item(1).Interior.ColorIndex = 1
+            (($Workbook.Worksheets.Item($Day)).Range('h4:h999')).FormatConditions.Item(1).Font.ColorIndex = 2
+            ($Workbook.Worksheets.Item($Day)).Columns('a').NumberFormat = "[$-x-systime]h:mm:ss AM/PM"
+            ($Workbook.Worksheets.Item($Day)).Columns('e').NumberFormat = "[<=9999999]###-####;(###) ###-####"
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1) = 'CALL LOG'
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1).Font.Bold = $True
+            $Count = 1
+            ForEach ($Items in $Titles_Widths.GetEnumerator()) {
+                $Title = $Items.Key
+                $Width = $Items.Value
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count) = $Title
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).ColumnWidth = $Width
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Interior.ColorIndex = 1
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Font.ColorIndex = 2
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(3,$Count).Interior.ColorIndex = 6
+                $Count++
+            }
+            ForEach ($Letter in $A_To_K) {
+                ($Workbook.Worksheets.Item($Day)).Columns("$Letter").HorizontalAlignment = -4108
+            }
+            # Name each sheet based on the currently selected month in short form and add the day on the end.
+            $Workbook.Worksheets.Item($Day).Name = "$(
+                if ($Month -eq 'September') {
+                    $Month.SubString(0,4)
+                } else {
+                    $Month.SubString(0,3)
+                }
+            )-$Day"
+        }
+        # Save newly created workbook, if the $Year variable has been set then pull it, and then close it.
+        $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
+        $Workbook.Close()
+    }
+}
+finally {
+    $Excel_Instance.Quit()
+}
 
 if ($ConfirmSave) {
     # If $ConfirmSave has been set check for valid directories and if they're usable or would create any type of file conflicts. Create directory if needed.
