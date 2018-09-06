@@ -1,0 +1,11 @@
+        <?php
+        // Website for favicon conversion and link code: http://www.favicomatic.com/
+        ?>
+        <link rel="apple-touch-icon-precomposed" sizes="57x57" href="plugins/images/apple-touch-icon-57x57.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="plugins/images/apple-touch-icon-72x72.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="60x60" href="plugins/images/apple-touch-icon-60x60.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="76x76" href="plugins/images/apple-touch-icon-76x76.png" />
+        <link rel="icon" type="image/png" href="plugins/images/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="plugins/images/favicon-16x16.png" sizes="16x16" />
+        <meta name="application-name" content="West Media"/>
+        <title>West Media</title>
