@@ -175,7 +175,7 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
 }
 $Excel_Instance.Quit()
 
-
+$Move_Files = $True
 if ($ConfirmSave) {
     # If $ConfirmSave has been set check for valid directories and if they're usable or would create any type of file conflicts. Create directory if needed.
     if (Test-Path $Move_To_Directory) {
@@ -194,7 +194,7 @@ if ($ConfirmSave) {
             } catch [System.UnauthorizedAccessException] {
                 Write-Error "Access denied: Cannot access '$Move_To_Directory'"
                 Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-                Clean-Up
+                $Move_Files = $False
             }
             try {
                 Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
@@ -202,7 +202,7 @@ if ($ConfirmSave) {
             } catch [System.UnauthorizedAccessException] {
                 Write-Error "Access denied: Cannot create '$Move_To_Directory'"
                 Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-                Clean-Up
+                $Move_Files = $False
             }
         }
     } else {
@@ -211,7 +211,7 @@ if ($ConfirmSave) {
         } catch [System.UnauthorizedAccessException] {
             Write-Error "Access denied: Cannot create '$Move_To_Directory'"
             Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-            Clean-Up
+            $Move_Files = $False
         }
     }
 } else {
@@ -234,6 +234,9 @@ if ($ConfirmSave) {
         if (Test-Path $Move_To_Directory) {
             if (Test-Path -PathType Container $Move_To_Directory) {
                 Get-Acl $Move_To_Directory | Out-Null
+            } else {
+                Write-Warning "The path specified leads to a file not a directory, script will clean up any left over files and then exit."
+                $Move_Files = $False
             }
         } else {
             Write-Output "This directory does not exist yet, creating as '$Move_To_Directory'"
@@ -242,11 +245,13 @@ if ($ConfirmSave) {
     } catch [System.UnauthorizedAccessException] {
         Write-Error "Access denied: Cannot create '$Move_To_Directory'"
         Write-Warning "Could not access or create specified directory, script will clean up any left over files and then exit."
-        Clean-Up
+        $Move_Files = $False
     }
 }
 
 # Move saved Excel files to final directory, remove work directory, and open the final directory for viewing.
-Get-ChildItem -Path $Save_Directory | Move-Item -Force -Destination $Move_To_Directory
-Invoke-Item $Move_To_Directory
+if ($Move_Files) {
+    Get-ChildItem -Path $Save_Directory | Move-Item -Force -Destination $Move_To_Directory
+    Invoke-Item $Move_To_Directory
+}
 Clean-Up
