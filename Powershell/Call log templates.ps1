@@ -32,18 +32,18 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 # Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
 $Months_Days = @{
-    January = 5
-    # Febuary = 28
-    # March = 31
-    # April = 30
-    # May = 31
-    # June = 30
-    # July = 31
-    # August = 31
-    # September = 30
-    # October = 31
-    # November = 30
-    # December = 31
+    January = 31
+    Febuary = 28
+    March = 31
+    April = 30
+    May = 31
+    June = 30
+    July = 31
+    August = 31
+    September = 30
+    October = 31
+    November = 30
+    December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -98,7 +98,7 @@ $Excel_Instance.Interactive = $False
 # when we're done that'd be a total of 28 sheets which makes up the base of our template because 28 days is
 # the lowest number of days we'd need, i.e. Febuary.
 $Workbook = $Excel_Instance.Workbooks.Add()
-ForEach ($Day in 1..4) {
+ForEach ($Day in 1..27) {
     $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
 }
 # A variable is set for the path to the new template workbook, it is then saved and closed.
@@ -115,7 +115,7 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
     $Missing_Sheets = $Days - $Workbook.Worksheets.Count
     # For each missing sheet, based on the number of days in the currently selected month, add a new sheet at the end of any current sheets
     if ($Missing_Sheets -ge 1) {
-        ForEach ($Missing_Sheet in 1..$Missing_Sheets) {
+        ForEach ($Missing_Sheet in 1..($Missing_Sheets + 1)) {
             $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
         }
     }
@@ -168,6 +168,8 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
                 $Month.SubString(0,3)
             }
         )-$Day"
+        # Rename last sheet to 'Extra'.
+        $Workbook.Worksheets.Item($Workbook.Worksheets.Count).Name = 'Extra'
     }
     # Save newly created workbook, if the $Year variable has been set then pull it, and then close it.
     $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
@@ -175,26 +177,31 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
 }
 $Excel_Instance.Quit()
 
-$Move_Files = $True
 if ($ConfirmSave) {
     # If $ConfirmSave has been set check for valid directories and if they're usable or would create any type of file conflicts. Create directory if needed.
     if (Test-Path $Move_To_Directory) {
         if (Test-Path -PathType Container $Move_To_Directory) {
             if (((Get-ChildItem $Move_To_Directory -Recurse | Measure-Object).Count) -ge 1) {
                 do {
-                    $Subfolder = "New Templates ($((([System.Guid]::NewGuid()).ToString()).Split('-')[-1]))"
+                    $Subfolder = "New Templates ($((Get-Date).ToString()))"
                 } until (-not (Test-Path $Subfolder))
                 Write-Output "'$Move_To_Directory' already exists and is not empty, to avoid possible conflicts a new subfolder will be made as '$(Join-Path -Path $Move_To_Directory -ChildPath $Subfolder)'"
                 $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
-                New-Item -ItemType Directory -Path $Move_To_Directory
+                try {
+                    New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
+                } catch [System.UnauthorizedAccessException] {
+                    Write-Error "Access denied: Cannot create '$Move_To_Directory'"
+                    Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
+                    $Caught_Error = $True
+                }
             }
         } else {
             try {
                 Get-ChildItem $Move_To_Directory -Recurse -ErrorAction Stop | Remove-Item -Recurse -Force -ErrorAction Stop
             } catch [System.UnauthorizedAccessException] {
                 Write-Error "Access denied: Cannot access '$Move_To_Directory'"
-                Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-                $Move_Files = $False
+                Write-Warning "Could not remove old save directory, script will clean up any left over files and then exit."
+                $Caught_Error = $True
             }
             try {
                 Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
@@ -202,7 +209,7 @@ if ($ConfirmSave) {
             } catch [System.UnauthorizedAccessException] {
                 Write-Error "Access denied: Cannot create '$Move_To_Directory'"
                 Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-                $Move_Files = $False
+                $Caught_Error = $True
             }
         }
     } else {
@@ -211,7 +218,7 @@ if ($ConfirmSave) {
         } catch [System.UnauthorizedAccessException] {
             Write-Error "Access denied: Cannot create '$Move_To_Directory'"
             Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-            $Move_Files = $False
+            $Caught_Error = $True
         }
     }
 } else {
@@ -236,7 +243,7 @@ if ($ConfirmSave) {
                 Get-Acl $Move_To_Directory | Out-Null
             } else {
                 Write-Warning "The path specified leads to a file not a directory, script will clean up any left over files and then exit."
-                $Move_Files = $False
+                $Caught_Error = $True
             }
         } else {
             Write-Output "This directory does not exist yet, creating as '$Move_To_Directory'"
@@ -245,12 +252,12 @@ if ($ConfirmSave) {
     } catch [System.UnauthorizedAccessException] {
         Write-Error "Access denied: Cannot create '$Move_To_Directory'"
         Write-Warning "Could not access or create specified directory, script will clean up any left over files and then exit."
-        $Move_Files = $False
+        $Caught_Error = $True
     }
 }
 
 # Move saved Excel files to final directory, remove work directory, and open the final directory for viewing.
-if ($Move_Files) {
+if (-not ($Caught_Error)) {
     Get-ChildItem -Path $Save_Directory | Move-Item -Force -Destination $Move_To_Directory
     Invoke-Item $Move_To_Directory
 }
