@@ -97,7 +97,7 @@ $Excel_Instance.Interactive = $False
 # when we're done that'd be a total of 28 sheets which makes up the base of our template because 28 days is
 # the lowest number of days we'd need, i.e. Febuary.
 $Workbook = $Excel_Instance.Workbooks.Add()
-ForEach ($Day in 1..4) {
+ForEach ($Day in 1..27) {
     $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
 }
 # A variable is set for the path to the new template workbook, it is then saved and closed.
