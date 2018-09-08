@@ -184,6 +184,7 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
 $Excel_Instance.Quit()
 
 if (-not ($ConfirmSave)) {
+    # If ConfirmSave not set then check if $Move_To_Directory is valid, if it is continue if not ask for a new directory.
 	do {
         if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
             do {
