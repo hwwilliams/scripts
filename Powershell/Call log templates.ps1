@@ -78,13 +78,6 @@ Function New-TemporaryDirectory {
     New-Item -ItemType Directory -Path (Join-Path -Path $Temp_Parent_Path -ChildPath $Temp_Name)
 }
 
-if (-not ($Move_To_Directory -match $Valid_Path_Regex)) {
-    Write-Error "$Move_To_Directory contains invalid characters and cannot be used or created."
-    Write-Warning 'The "$Move_To_Directory" variable needs a valid path set for the script to run.'
-    Write-Warning "Exiting script."
-    exit
-}
-
 $Work_Directory = New-TemporaryDirectory
 $Save_Directory = Join-Path -Path $Work_Directory -ChildPath 'Done'
 if (-Not (Test-Path $Save_Directory)) {
