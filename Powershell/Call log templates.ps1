@@ -13,8 +13,8 @@ Param (
 ## General Dictionaries, Variables, and Other Declarations
 # The Move_To_Directory variable is the default save location, currently it makes a folder and
 # saves to it within the currently logged in user's documents folder.
-$Move_To_Directory = "C:\Users\$env:username\Documents\Call log templates$(if ($Year) {" $Year"})\"
-$Valid_Directory_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
+$Move_To_Directory = ("C:\Users\$env:username\Documents\Call log templates$(if ($Year) {" $Year"})\").Trim()
+$Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
 
 # Excel ComObject Conditions and Operators
 Add-Type -AssemblyName Microsoft.Office.Interop.Excel
@@ -32,18 +32,19 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 # Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
 $Months_Days = @{
-    January = 31
-    Febuary = 28
-    March = 31
-    April = 30
-    May = 31
-    June = 30
-    July = 31
-    August = 31
-    September = 30
-    October = 31
-    November = 30
-    December = 31
+    # January = 31
+    January = 5
+    # Febuary = 28
+    # March = 31
+    # April = 30
+    # May = 31
+    # June = 30
+    # July = 31
+    # August = 31
+    # September = 30
+    # October = 31
+    # November = 30
+    # December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -68,15 +69,21 @@ Function Clean-Up {
     Get-ChildItem $Work_Directory -Recurse -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $Work_Directory -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Variable * -ErrorAction SilentlyContinue
-    Remove-Module *
+    Remove-Module * -ErrorAction SilentlyContinue
     $error.Clear()
-    Clear-Host
 }
 
 Function New-TemporaryDirectory {
     $Temp_Parent_Path = [System.IO.Path]::GetTempPath()
     [String] $Temp_Name = [System.Guid]::NewGuid()
     New-Item -ItemType Directory -Path (Join-Path -Path $Temp_Parent_Path -ChildPath $Temp_Name)
+}
+
+if (-not ($Move_To_Directory -match $Valid_Path_Regex)) {
+    Write-Error "$Move_To_Directory contains invalid characters and cannot be used or created."
+    Write-Warning 'The "$Move_To_Directory" variable needs a valid path set for the script to run.'
+    Write-Warning "Exiting script."
+    exit
 }
 
 $Work_Directory = New-TemporaryDirectory
@@ -98,7 +105,7 @@ $Excel_Instance.Interactive = $False
 # when we're done that'd be a total of 28 sheets which makes up the base of our template because 28 days is
 # the lowest number of days we'd need, i.e. Febuary.
 $Workbook = $Excel_Instance.Workbooks.Add()
-ForEach ($Day in 1..27) {
+ForEach ($Day in 1..4) {
     $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
 }
 # A variable is set for the path to the new template workbook, it is then saved and closed.
@@ -177,88 +184,95 @@ ForEach ($Items in $Months_Days.GetEnumerator()) {
 }
 $Excel_Instance.Quit()
 
-if ($ConfirmSave) {
-    # If $ConfirmSave has been set check for valid directories and if they're usable or would create any type of file conflicts. Create directory if needed.
-    if (Test-Path $Move_To_Directory) {
-        if (Test-Path -PathType Container $Move_To_Directory) {
-            if (((Get-ChildItem $Move_To_Directory -Recurse | Measure-Object).Count) -ge 1) {
-                do {
-                    $Subfolder = "New Templates ($((Get-Date).ToString()))"
-                } until (-not (Test-Path $Subfolder))
-                Write-Output "'$Move_To_Directory' already exists and is not empty, to avoid possible conflicts a new subfolder will be made as '$(Join-Path -Path $Move_To_Directory -ChildPath $Subfolder)'"
-                $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
-                try {
-                    New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
-                } catch [System.UnauthorizedAccessException] {
-                    Write-Error "Access denied: Cannot create '$Move_To_Directory'"
-                    Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
-                    $Caught_Error = $True
+if (-not ($ConfirmSave)) {
+	do {
+        if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
+            do {
+                $Confirm_Move_To_Directory = (Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)").Trim()
+                if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
+                    $Confirmed_Directory = $True
+                } else {
+                    Write-Warning "Your answer must be Yes or No."
                 }
-            }
+            } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
         } else {
-            try {
-                Get-ChildItem $Move_To_Directory -Recurse -ErrorAction Stop | Remove-Item -Recurse -Force -ErrorAction Stop
-            } catch [System.UnauthorizedAccessException] {
-                Write-Error "Access denied: Cannot access '$Move_To_Directory'"
-                Write-Warning "Could not remove old save directory, script will clean up any left over files and then exit."
-                $Caught_Error = $True
+            Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
+            $Confirm_Move_To_Directory = 'n'
+            $Confirmed_Directory = $True
+        }
+    } until ($Confirmed_Directory)
+    if ($Confirm_Move_To_Directory -like "n*") {
+        do {
+            $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
+            if ($Move_To_Directory.StartsWith('"')) {
+               $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+            } elseif ($Move_To_Directory.StartsWith("'")) {
+                $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
             }
+            if ($Move_To_Directory -match $Valid_Path_Regex) {
+                $Valid_Path = $True
+            } else {
+                Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+            }
+            if (Test-Path -PathType Container $Move_To_Directory) {
+                $Is_Directory = $True
+            } else {
+                Write-Warning "The path you specified is not a directory."
+            }
+            if (($Valid_Path) -and ($Is_Directory)) {
+                $Valid_Directory = $True
+            }
+        } until ($Valid_Directory)
+    }
+}
+
+if (Test-Path $Move_To_Directory) {
+    if (Test-Path -PathType Container $Move_To_Directory) {
+        if (((Get-ChildItem $Move_To_Directory -Recurse | Measure-Object).Count) -ge 1) {
+            do {
+                $Subfolder = "New Templates ($((Get-Date -UFormat '%Y-%m-%d@%I-%M-%S-%p').ToString()))"
+            } until (-not (Test-Path $(Join-Path -Path $Move_To_Directory -ChildPath $Subfolder)))
+            Write-Warning "'$Move_To_Directory' already exists and is not empty."
+            Write-Warning "To avoid possible conflicts a new subfolder will be made as with the current time and date."
+            $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
             try {
-                Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
                 New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
             } catch [System.UnauthorizedAccessException] {
-                Write-Error "Access denied: Cannot create '$Move_To_Directory'"
-                Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
+                Write-Error "Permission Denied: Cannot create '$Move_To_Directory'"
+                Write-Warning "Cannot create save directory, script will clean up any left over files and then exit."
                 $Caught_Error = $True
             }
         }
     } else {
         try {
+            Get-ChildItem $Move_To_Directory -Recurse -ErrorAction Stop | Remove-Item -Recurse -Force -ErrorAction Stop
+            Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
+        } catch [System.UnauthorizedAccessException] {
+            Write-Error "Permission Denied: Cannot access '$Move_To_Directory'"
+            Write-Warning "Cannot remove old save directory, script will clean up any left over files and then exit."
+            $Caught_Error = $True
+        }
+        try {
             New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
         } catch [System.UnauthorizedAccessException] {
-            Write-Error "Access denied: Cannot create '$Move_To_Directory'"
-            Write-Warning "Could not create save directory, script will clean up any left over files and then exit."
+            Write-Error "Permission Denied: Cannot create '$Move_To_Directory'"
+            Write-Warning "Cannot create save directory, script will clean up any left over files and then exit."
             $Caught_Error = $True
         }
     }
 } else {
-    # If $ConfirmSave not set then confirm $Move_To_Directory or request a new one and confirm that it is usable.
-    do {
-        $Confirm_Move_To_Directory = Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)"
-        if (-not ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")) {
-            Write-Warning "Your answer must be Yes or No."
-        }
-    } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
-    if ($Confirm_Move_To_Directory -like "n*") {
-        do {
-            $Move_To_Directory = Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)"
-            if (-not ($Move_To_Directory -match $Valid_Directory_Regex)) {
-                Write-Warning "The directory you specified contains invalid characters and cannot be used or created."
-            }
-        } until ($Move_To_Directory -match $Valid_Directory_Regex)
-    }
     try {
-        if (Test-Path $Move_To_Directory) {
-            if (Test-Path -PathType Container $Move_To_Directory) {
-                Get-Acl $Move_To_Directory | Out-Null
-            } else {
-                Write-Warning "The path specified leads to a file not a directory, script will clean up any left over files and then exit."
-                $Caught_Error = $True
-            }
-        } else {
-            Write-Output "This directory does not exist yet, creating as '$Move_To_Directory'"
-            New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
-        }
+        New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
     } catch [System.UnauthorizedAccessException] {
-        Write-Error "Access denied: Cannot create '$Move_To_Directory'"
-        Write-Warning "Could not access or create specified directory, script will clean up any left over files and then exit."
+        Write-Error "Permission Denied: Cannot create '$Move_To_Directory'"
+        Write-Warning "Cannot create save directory, script will clean up any left over files and then exit."
         $Caught_Error = $True
     }
 }
 
 # Move saved Excel files to final directory, remove work directory, and open the final directory for viewing.
 if (-not ($Caught_Error)) {
-    Get-ChildItem -Path $Save_Directory | Move-Item -Force -Destination $Move_To_Directory
+    Get-ChildItem $Save_Directory -Recurse | Move-Item -Destination $Move_To_Directory -Force
     Invoke-Item $Move_To_Directory
 }
-Clean-Up
+#Clean-Up
