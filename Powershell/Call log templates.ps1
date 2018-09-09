@@ -34,18 +34,18 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 ## Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
 $Months_Days = @{
-    January = 31
-    Febuary = 28
-    March = 31
-    April = 30
-    May = 31
-    June = 30
-    July = 31
-    August = 31
-    September = 30
-    October = 31
-    November = 30
-    December = 31
+    January = 5
+    # Febuary = 28
+    # March = 31
+    # April = 30
+    # May = 31
+    # June = 30
+    # July = 31
+    # August = 31
+    # September = 30
+    # October = 31
+    # November = 30
+    # December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -103,7 +103,7 @@ $Excel_Instance.Interactive = $False
 # when we're done that'd be a total of 28 sheets which makes up the base of our template because 28 days is
 # the lowest number of days we'd need, i.e. Febuary.
 $Workbook = $Excel_Instance.Workbooks.Add()
-ForEach ($Day in 1..27) {
+ForEach ($Day in 1..4) {
     $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
 }
 # A variable is set for the path to the new template workbook, it is then saved and closed.
@@ -237,26 +237,22 @@ if (-not ($ConfirmSave)) {
     if ($Confirm_Move_To_Directory -like "n*") {
         # Loop until condition is met.
         do {
-            # Loop until condition is met.
-            do {
-                # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
-                $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
-                if ($Move_To_Directory.StartsWith('"')) {
-                    # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
-                   $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
-                } elseif ($Move_To_Directory.StartsWith("'")) {
-                    # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
-                    $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
-                }
-                if ($Move_To_Directory -match $Valid_Path_Regex) {
-                    # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
-                    $Valid_Path = $True
-                } else {
-                    # Else warn the user that the path they specified is not valid.
-                    Write-Warning "The path you specified contains invalid characters and cannot be used or created."
-                }
-            # Condition is met if the $Valid_Path is true.
-            } until ($Valid_Path)
+            # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
+            $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
+            if ($Move_To_Directory.StartsWith('"')) {
+                # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
+               $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+            } elseif ($Move_To_Directory.StartsWith("'")) {
+                # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
+                $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
+            }
+            if ($Move_To_Directory -match $Valid_Path_Regex) {
+                # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
+                $Directory_Valid = $True
+            } else {
+                # Else warn the user that the path they specified is not valid.
+                Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+            }
             if (Test-Path -PathType Container $Move_To_Directory) {
                 # If $Move_To_Directory contains a folder path set $Is_Directory to true.
                 $Is_Directory = $True
@@ -265,7 +261,7 @@ if (-not ($ConfirmSave)) {
                 Write-Warning "The path you specified does not point to a directory."
             }
             # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
-            if (($Valid_Path) -and ($Is_Directory)) {
+            if (($Directory_Valid) -and ($Is_Directory)) {
                 $Valid_Directory = $True
             }
         # Condition is met if the $Valid_Directory is true.
@@ -289,7 +285,6 @@ if (Test-Path $Move_To_Directory) {
             Write-Warning "To avoid possible conflicts a new subfolder will be made as with the current time and date."
             # Set new $Move_To_Directory using new $Subfolder variable.
             $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
-            $Create_Move_To_Directory = $True
         }
     # Else if $Move_To_Directory exists but is not a directory do as follows.
     } else {
@@ -304,15 +299,11 @@ if (Test-Path $Move_To_Directory) {
             Write-Warning "Cannot remove old save directory, script will clean up any left over files and then exit."
             $Caught_Error = $True
         }
-        $Create_Move_To_Directory = $True
     }
-# Else if $Move_To_Directory does not exist set $Move_To_Directory to true.
-} else {
-    $Create_Move_To_Directory = $True
 }
 
-# If $Move_To_Directory is true then do as follows.
-if ($Create_Move_To_Directory) {
+# If $Move_To_Directory doesn't exist do as follows.
+if (-not (Test-Path $Move_To_Directory)) {
     try {
         # Attempt to make new $Move_To_Directory directory.
         New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
@@ -324,7 +315,6 @@ if ($Create_Move_To_Directory) {
     }
 }
 
-# Move saved Excel files to final directory, remove work directory, and open the final directory for viewing.
 # If $Caught_Error is not true do as follows.
 if (-not ($Caught_Error)) {
     # Get all items within $Save_Directory and move them to $Move_To_Directory
