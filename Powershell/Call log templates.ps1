@@ -34,18 +34,18 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 ## Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
 $Months_Days = @{
-    January = 5
-    # Febuary = 28
-    # March = 31
-    # April = 30
-    # May = 31
-    # June = 30
-    # July = 31
-    # August = 31
-    # September = 30
-    # October = 31
-    # November = 30
-    # December = 31
+    January = 31
+    Febuary = 28
+    March = 31
+    April = 30
+    May = 31
+    June = 30
+    July = 31
+    August = 31
+    September = 30
+    October = 31
+    November = 30
+    December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -111,7 +111,7 @@ try {
     $Workbook.SaveAs($Temp_Workbook, $Excel_Format)
     $Workbook.Close()
     # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
-    
+
     # Begin building each monthly workbook
     ForEach ($Items in $Months_Days.GetEnumerator()) {
         # Pull month and days per month from the $Months_Days hashtable (dictionary).
