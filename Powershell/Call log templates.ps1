@@ -11,10 +11,13 @@ Param (
 )
 
 ## General Dictionaries, Variables, and Other Declarations.
+#$Begin_Sheet_Name = 'Month Name'
+$Begin_Sheet_Name = 'Month Number'
 # The Move_To_Directory variable is the default save location, currently it makes a folder and
 # saves to it within the currently logged in user's documents folder.
 # Also trim any leading or trailing spaces.
 $Move_To_Directory = ("C:\Users\$env:username\Documents\Call log templates$(if ($Year) {" $Year"})\").Trim()
+# Regex pattern to match any valid file or folder paths.
 $Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
 
 ## Excel ComObject Conditions and Operators.
@@ -186,12 +189,18 @@ try {
             }
             # Name each sheet based on the currently selected month in short form and add the day on the end.
             $Workbook.Worksheets.Item($Day).Name = "$(
-                if ($Month -eq 'September') {
-                    # If $Month is equal to September then print the first four letters (Sept).
-                    $Month.SubString(0,4)
-                } else {
-                    # Else print the first three letters (Jul for July).
-                    $Month.SubString(0,3)
+                if ($Begin_Sheet_Name -eq 'Month Name') {
+                    if ($Month -eq 'September') {
+                        # If $Month is equal to September then print the first four letters (Sept).
+                        $Month.SubString(0,4)
+                    } else {
+                        # Else print the first three letters (Jul for July).
+                        $Month.SubString(0,3)
+                    }
+                } elseif ($Begin_Sheet_Name -eq 'Month Number') {
+                    ForEach ($Item in $Months_Days.Count) {
+                        $Item
+                    }
                 }
             )-$Day"
             # Rename last sheet to 'Extra'.
