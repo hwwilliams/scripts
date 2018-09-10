@@ -58,7 +58,7 @@ $Titles_Widths = [Ordered]@{
     'Ticket #' = 9
     'Notes/Email' = 15
     'Router' = 7
-    'Territory' = 7
+    'Territory' = 8
 }
 $Values_Colors = @{
     'cb' = $LimeGreen
@@ -128,7 +128,7 @@ try {
             }
         }
         # For each day (sheet) in the workbook set conditional formatting.
-        ForEach ($Day in 1..$Days) {
+        ForEach ($Day in 1..($Days + 1)) {
             # Set conditional formatting on column F from cell 4 to 999, activtive if they contain 'aa'.
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, 'aa')
             # If conditional formatting is activtive turn the cell $LimeGreen.
