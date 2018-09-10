@@ -209,6 +209,7 @@ if (-not ($ConfirmSave)) {
     # Loop until condition is met.
 	do {
         # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
+        $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
         if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
             # Loop until condition is met.
             do {
@@ -238,6 +239,7 @@ if (-not ($ConfirmSave)) {
         # Loop until condition is met.
         do {
             # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
+            $Directory_Valid = $False; $Is_Directory = $False; $Valid_Directory = $False
             $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
             if ($Move_To_Directory.StartsWith('"')) {
                 # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
@@ -270,6 +272,7 @@ if (-not ($ConfirmSave)) {
 }
 
 # If $Move_To_Directory exists then do as follows.
+$Caught_Error = $False
 if (Test-Path $Move_To_Directory) {
     # If $Move_To_Directory exists and is a directory then do as follows.
     if (Test-Path -PathType Container $Move_To_Directory) {
