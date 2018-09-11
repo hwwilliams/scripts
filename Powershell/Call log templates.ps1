@@ -5,18 +5,37 @@
 #   the valid year will be appended to the file name of all Excel files created.
 [CmdletBinding()]
 Param (
-    [Switch] $ConfirmSave = $False,
+    [Switch] $ConfirmSave = $True,
     [ValidatePattern('^[12][0-9]{3}$')]
     [Int] $Year
 )
 
-## General Dictionaries, Variables, and Other Declarations.
-#$Begin_Sheet_Name = 'Month Name'
-$Begin_Sheet_Name = 'Month Number'
-# The Move_To_Directory variable is the default save location, currently it makes a folder and
-# saves to it within the currently logged in user's documents folder.
-# Also trim any leading or trailing spaces.
-$Move_To_Directory = ("C:\Users\$env:username\Documents\Call log templates$(if ($Year) {" $Year"})\").Trim()
+## User defined Variables
+# If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
+# If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
+$Begin_Sheet_Name = "Month Number"
+# The name of the folder that will be used or created, if necessary, within the $Base_Directory.
+$Base_Subdirectory_Name = "Call log templates"
+# Set the default base directory to save the $Base_Subdirectory in, $env:username will automatically be replaced by your username and
+# should be left alone if the base directory you want to use starts with the user folder.
+$Base_Directory_Path = "C:\Users\$env:username\Documents\"
+# If you wish to add a certain year to the end of the excel file then set it here.
+$Year = 2018
+# If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
+# If the $Year variable is not set then it does not matter if this is true or false.
+$Year_Folder = $True
+
+# Setup final move directory based on user defined variables
+if ($Base_Directory_Path) {
+    if (-not ($Base_Subdirectory_Name)) {
+        $Base_Subdirectory_Name = "Call log templates"
+    }
+    if (($Year) -and ($Year_Folder)) {
+        $Base_Subdirectory_Name = "$Base_Subdirectory_Name $Year"
+    }
+    $Move_To_Directory = Join-Path -Path $Base_Directory_Path -ChildPath $Base_Subdirectory_Name
+}
+
 # Regex pattern to match any valid file or folder paths.
 $Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
 
@@ -36,19 +55,19 @@ $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 
 ## Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
-$Months_Days = @{
+$Months_Days = [Ordered]@{
     January = 31
     Febuary = 28
-    March = 31
-    April = 30
-    May = 31
-    June = 30
-    July = 31
-    August = 31
-    September = 30
-    October = 31
-    November = 30
-    December = 31
+    # March = 31
+    # April = 30
+    # May = 31
+    # June = 30
+    # July = 31
+    # August = 31
+    # September = 30
+    # October = 31
+    # November = 30
+    # December = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time' = 12
@@ -116,6 +135,7 @@ try {
     # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
 
     # Begin building each monthly workbook
+    $Month_Number = 1
     ForEach ($Items in $Months_Days.GetEnumerator()) {
         # Pull month and days per month from the $Months_Days hashtable (dictionary).
         $Month = $Items.Key
@@ -190,26 +210,27 @@ try {
             # Name each sheet based on the currently selected month in short form and add the day on the end.
             $Workbook.Worksheets.Item($Day).Name = "$(
                 if ($Begin_Sheet_Name -eq 'Month Name') {
+                # If $Begin_Sheet_Name is equal to Month Name
                     if ($Month -eq 'September') {
                         # If $Month is equal to September then print the first four letters (Sept).
                         $Month.SubString(0,4)
                     } else {
-                        # Else print the first three letters (Jul for July).
+                        # Else if $Month is not equal to September then print the first three letters (Jul for July).
                         $Month.SubString(0,3)
                     }
                 } elseif ($Begin_Sheet_Name -eq 'Month Number') {
-                    ForEach ($Item in $Months_Days.Count) {
-                        $Item
-                    }
+                    $Month_Number
                 }
             )-$Day"
             # Rename last sheet to 'Extra'.
             $Workbook.Worksheets.Item($Workbook.Worksheets.Count).Name = 'Extra'
+
         }
         # Save newly created workbook, if the $Year variable has been set then print it, and then close it.
         $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
         $Workbook.Close()
         # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
+        $Month_Number++
     }
     $Excel_Instance.Quit()
 
