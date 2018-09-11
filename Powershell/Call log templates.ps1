@@ -23,14 +23,14 @@ $Base_Directory_Path = "C:\Users\$env:username\Documents\"
 $Year = 2018
 # If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
 # If the $Year variable is not set then it does not matter if this is true or false.
-$Year_Folder = $True
+$Year_On_Folder = $True
 
 # Setup final move directory based on user defined variables
 if ($Base_Directory_Path) {
     if (-not ($Base_Subdirectory_Name)) {
         $Base_Subdirectory_Name = "Call log templates"
     }
-    if (($Year) -and ($Year_Folder)) {
+    if (($Year) -and ($Year_On_Folder)) {
         $Base_Subdirectory_Name = "$Base_Subdirectory_Name $Year"
     }
     $Move_To_Directory = Join-Path -Path $Base_Directory_Path -ChildPath $Base_Subdirectory_Name
