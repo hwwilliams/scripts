@@ -86,6 +86,7 @@ Function Clean-Up {
     Remove-Module * -ErrorAction SilentlyContinue
     $error.Clear()
 }
+
 # New-TemporaryDirectory function makes a new directory in the user's temp folder.
 Function New-TemporaryDirectory {
     $Temp_Parent_Path = [System.IO.Path]::GetTempPath()
