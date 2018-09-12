@@ -25,7 +25,6 @@ $Year = 2018
 # If the $Year variable is not set then it does not matter if this is true or false.
 $Year_Folder_Name = $True
 
-
 ## Excel ComObject Conditions and Operators.
 Add-Type -AssemblyName Microsoft.Office.Interop.Excel
 # Set default Excel workbook format to save as.
