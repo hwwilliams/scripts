@@ -13,31 +13,18 @@ Param (
 ## User defined Variables
 # If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
 # If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
-$Begin_Sheet_Name = "Month Number"
-# The name of the folder that will be used or created, if necessary, within the $Base_Directory.
-$Base_Subdirectory_Name = "Call log templates"
-# Set the default base directory to save the $Base_Subdirectory in, $env:username will automatically be replaced by your username and
-# should be left alone if the base directory you want to use starts with the user folder.
-$Base_Directory_Path = "C:\Users\$env:username\Documents\"
+# If you leave $Begin_Sheet_Name as "default" then "Month Number" will be used
+$Begin_Sheet_Name = "default"
+# Replace "default" with the name of the folder that will be used or created, if necessary, within the $Base_Directory_Path.
+$Base_Subdirectory_Name = "default"
+# Replace "default" with the root save directory for the excel files, example: "C:\Users\$env:username\Documents\"
+$Base_Directory_Path = "default"
 # If you wish to add a certain year to the end of the excel file then set it here.
 $Year = 2018
 # If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
 # If the $Year variable is not set then it does not matter if this is true or false.
-$Year_On_Folder = $True
+$Year_Folder_Name = $True
 
-# Setup final move directory based on user defined variables
-if ($Base_Directory_Path) {
-    if (-not ($Base_Subdirectory_Name)) {
-        $Base_Subdirectory_Name = "Call log templates"
-    }
-    if (($Year) -and ($Year_On_Folder)) {
-        $Base_Subdirectory_Name = "$Base_Subdirectory_Name $Year"
-    }
-    $Move_To_Directory = Join-Path -Path $Base_Directory_Path -ChildPath $Base_Subdirectory_Name
-}
-
-# Regex pattern to match any valid file or folder paths.
-$Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
 
 ## Excel ComObject Conditions and Operators.
 Add-Type -AssemblyName Microsoft.Office.Interop.Excel
@@ -52,6 +39,9 @@ $Not_Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]
 $RoyalBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
 $LimeGreen = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLimeGreen
 $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
+
+# Regex pattern to match any valid file or folder paths.
+$Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
 
 ## Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
@@ -103,6 +93,25 @@ Function New-TemporaryDirectory {
     [String] $Temp_Name = [System.Guid]::NewGuid()
     New-Item -ItemType Directory -Path (Join-Path -Path $Temp_Parent_Path -ChildPath $Temp_Name)
 }
+
+if ((-not ($Begin_Sheet_Name)) -or ($Begin_Sheet_Name -eq "default")) {
+    $Begin_Sheet_Name = "Month Number"
+}
+
+if ((-not ($Base_Directory_Path)) -or ($Base_Directory_Path -eq "default")) {
+    $Base_Directory_Path = "C:\Users\$env:username\Documents\"
+}
+# Setup final move directory based on user defined variables
+if ((-not ($Base_Subdirectory_Name)) -or ($Base_Subdirectory_Name -eq "default")) {
+    $Base_Subdirectory_Name = "Call log templates"
+}
+
+if (($Year) -and ($Year_Folder_Name)) {
+    $Base_Subdirectory_Name = "$Base_Subdirectory_Name $Year"
+}
+
+$Move_To_Directory = Join-Path -Path $Base_Directory_Path -ChildPath $Base_Subdirectory_Name
+
 try {
     # Make temp work directory and 'done' subdirectory.
     $Work_Directory = New-TemporaryDirectory
@@ -210,7 +219,7 @@ try {
             # Name each sheet based on the currently selected month in short form and add the day on the end.
             $Workbook.Worksheets.Item($Day).Name = "$(
                 if ($Begin_Sheet_Name -eq 'Month Name') {
-                # If $Begin_Sheet_Name is equal to Month Name
+                # If $Begin_Sheet_Name is equal to Month Name do as follows.
                     if ($Month -eq 'September') {
                         # If $Month is equal to September then print the first four letters (Sept).
                         $Month.SubString(0,4)
@@ -219,6 +228,7 @@ try {
                         $Month.SubString(0,3)
                     }
                 } elseif ($Begin_Sheet_Name -eq 'Month Number') {
+                    # Else if $Begin_Sheet_Name is equal to Month Number print $Month_Number.
                     $Month_Number
                 }
             )-$Day"
