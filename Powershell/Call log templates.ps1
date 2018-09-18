@@ -1,15 +1,3 @@
-﻿# Two passable script arguments
-# - ConfirmSave: If this argument is passed then the script will default to saving to the directory
-#   defined in the '$Move_To_Directory' variable.
-# - CallLogYear: If passed with a 4 digit number ranging from 1000-2999,
-#   the valid year will be appended to the file name of all Excel files created.
-[CmdletBinding()]
-Param (
-    [Switch] $ConfirmSave = $True,
-    [ValidatePattern('^[12][0-9]{3}$')]
-    [Int] $Year
-)
-
 ## User defined Variables
 # If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
 # If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
@@ -234,7 +222,6 @@ try {
             )-$Day"
             # Rename last sheet to 'Extra'.
             $Workbook.Worksheets.Item($Workbook.Worksheets.Count).Name = 'Extra'
-
         }
         # Save newly created workbook, if the $Year variable has been set then print it, and then close it.
         $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
@@ -244,71 +231,68 @@ try {
     }
     $Excel_Instance.Quit()
 
-    # If $ConfirmSave is not true then do as follows.
-    if (-not ($ConfirmSave)) {
-        # Loop until condition is met.
-    	do {
-            # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
-            $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
-            if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
-                # Loop until condition is met.
-                do {
-                    # Ask if the default save directory is okay to use, trim any leading or trailing spaces.
-                    $Confirm_Move_To_Directory = (Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)").Trim()
-                    if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
-                        # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
-                        $Confirmed_Directory = $True
-                    } else {
-                        # Else warn the user their answer must be yes or no.
-                        Write-Warning "Your answer must be yes or no."
-                    }
-                # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
-                } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
-            } else {
-            # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
-                Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
-                # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
-                $Confirm_Move_To_Directory = 'n'
-                # Set $Confirmed_Directory to true so the do..until condition is met.
-                $Confirmed_Directory = $True
-            }
-        # Condition is met if the $Confirmed_Directory is true.
-        } until ($Confirmed_Directory)
-        # If $Confirm_Move_To_Directory is like 'n' then do as follows.
-        if ($Confirm_Move_To_Directory -like "n*") {
+    # Loop until condition is met.
+	do {
+        # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
+        $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
+        if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
             # Loop until condition is met.
             do {
-                # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
-                $Directory_Valid = $False; $Is_Directory = $False; $Valid_Directory = $False
-                $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
-                if ($Move_To_Directory.StartsWith('"')) {
-                    # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
-                   $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
-                } elseif ($Move_To_Directory.StartsWith("'")) {
-                    # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
-                    $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
-                }
-                if ($Move_To_Directory -match $Valid_Path_Regex) {
-                    # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
-                    $Directory_Valid = $True
+                # Ask if the default save directory is okay to use, trim any leading or trailing spaces.
+                $Confirm_Move_To_Directory = (Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)").Trim()
+                if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
+                    # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
+                    $Confirmed_Directory = $True
                 } else {
-                    # Else warn the user that the path they specified is not valid.
-                    Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+                    # Else warn the user their answer must be yes or no.
+                    Write-Warning "Your answer must be yes or no."
                 }
-                if (Test-Path -PathType Container $Move_To_Directory) {
-                    # If $Move_To_Directory contains a folder path set $Is_Directory to true.
-                    $Is_Directory = $True
-                } else {
-                    # Else warn the user that the path they specified is not valid.
-                    Write-Warning "The path you specified does not point to a directory."
-                }
-                # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
-                if (($Directory_Valid) -and ($Is_Directory)) {
-                    $Valid_Directory = $True
-                }
-            # Condition is met if the $Valid_Directory is true.
-            } until ($Valid_Directory)
+            # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
+            } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
+        } else {
+        # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+            Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
+            # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
+            $Confirm_Move_To_Directory = 'n'
+            # Set $Confirmed_Directory to true so the do..until condition is met.
+            $Confirmed_Directory = $True
         }
+    # Condition is met if the $Confirmed_Directory is true.
+    } until ($Confirmed_Directory)
+    # If $Confirm_Move_To_Directory is like 'n' then do as follows.
+    if ($Confirm_Move_To_Directory -like "n*") {
+        # Loop until condition is met.
+        do {
+            # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
+            $Directory_Valid = $False; $Is_Directory = $False; $Valid_Directory = $False
+            $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
+            if ($Move_To_Directory.StartsWith('"')) {
+                # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
+               $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+            } elseif ($Move_To_Directory.StartsWith("'")) {
+                # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
+                $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
+            }
+            if ($Move_To_Directory -match $Valid_Path_Regex) {
+                # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
+                $Directory_Valid = $True
+            } else {
+                # Else warn the user that the path they specified is not valid.
+                Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+            }
+            if (Test-Path -PathType Container $Move_To_Directory) {
+                # If $Move_To_Directory contains a folder path set $Is_Directory to true.
+                $Is_Directory = $True
+            } else {
+                # Else warn the user that the path they specified is not valid.
+                Write-Warning "The path you specified does not point to a directory."
+            }
+            # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
+            if (($Directory_Valid) -and ($Is_Directory)) {
+                $Valid_Directory = $True
+            }
+        # Condition is met if the $Valid_Directory is true.
+        } until ($Valid_Directory)
     }
 
     # If $Move_To_Directory exists then do as follows.
