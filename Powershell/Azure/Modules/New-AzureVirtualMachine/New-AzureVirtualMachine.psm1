@@ -1,13 +1,13 @@
-﻿Function Set-UbuntuServerPublisher() {
-    $Publisher = "Canonical"
-    $PublisherOffer = "UbuntuServer"
-    $PublisherSkus = "16.04-LTS"
-}
-
-Function Set-CentOSServerPublisher() {
+﻿Function Set-CentOSServerPublisher() {
     $Publisher = "Tunnelbiz"
     $PublisherOffer = "centos70-min"
     $PublisherSkus = "centos7-min"
+}
+
+Function Set-UbuntuServerPublisher() {
+    $Publisher = "Canonical"
+    $PublisherOffer = "UbuntuServer"
+    $PublisherSkus = "16.04-LTS"
 }
 
 Function Set-WindowsDesktopPublisher() {
@@ -26,11 +26,10 @@ Function New-VirtualMachine() {
     Param(
     $AdminUser,
     $AdminPassword,
-    [Switch] $Desktop,
     $LocationName,
     $ResourceGroupName,
     $VMName,
-    [ValidateSet('Linux','Windows')]
+    [ValidateSet('centos','ubuntu','Windowsdesktop','windowsserver')]
     $OSType
     )
 
@@ -39,21 +38,26 @@ Function New-VirtualMachine() {
 
     $VirtualMachine = New-AzureRmVMConfig -VMName $VMName -VMSize $VMSize
 
-    if ($OSType -eq "Linux") {
+    if ($OSType -icontains ('centos','ubuntu')) {
         $VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine -Linux -ComputerName $VMName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
-        Set-LinuxPublisher
-    } elseif ($OSType -eq "Windows") {
+        if ($OSType -eq 'centos') {
+            Set-CentOSServerPublisher
+        } elseif ($OSType -eq 'ubuntu') {
+            Set-UbuntuServerPublisher
+        }
+    } elseif ($OSType -ilike "windows*") {
         $VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine -Windows -ComputerName $VMName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
-        if ($Desktop) {
+        if ($OSType -eq 'Windowsdesktop') {
             Set-WindowsDesktopPublisher
-        } else {
+        } elseif ($OSType -eq 'windowsserver') {
             Set-WindowsServerPublisher
         }
     }
 
+    $SourceImageID = (Get-AzureRmVMImageSku -Location $LocationName -PublisherName $Publisher -Offer $PublisherOffer | Where-Object { $_.Skus -eq $PublisherSkus }).Id
     $VirtualMachine = Add-AzureRmVMNetworkInterface -VM $VirtualMachine -Id $NIC.Id
-    $VirtualMachine = Set-AzureRmVMSourceImage -VM $VirtualMachine -PublisherName $Publisher -Offer $PublisherOffer -Skus $PublisherSkus -Version latest
-    New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $VirtualMachine -Verbose
+    $VirtualMachine = Set-AzureRmVMSourceImage -VM $VirtualMachine -Id $SourceImageID
+    New-AzureRmVM -VM $VirtualMachine -ResourceGroupName $ResourceGroupName -Location $LocationName -Verbose
 }
 
 #Export-ModuleMember -Function 'New-VirtualMachine'
