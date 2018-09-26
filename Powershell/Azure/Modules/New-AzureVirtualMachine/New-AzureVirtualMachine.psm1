@@ -1,7 +1,13 @@
-﻿Function Set-LinuxServerPublisher() {
+﻿Function Set-UbuntuServerPublisher() {
     $Publisher = "Canonical"
     $PublisherOffer = "UbuntuServer"
     $PublisherSkus = "16.04-LTS"
+}
+
+Function Set-CentOSServerPublisher() {
+    $Publisher = "Tunnelbiz"
+    $PublisherOffer = "centos70-min"
+    $PublisherSkus = "centos7-min"
 }
 
 Function Set-WindowsDesktopPublisher() {
@@ -50,4 +56,4 @@ Function New-VirtualMachine() {
     New-AzureRmVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $VirtualMachine -Verbose
 }
 
-Export-ModuleMember -Function 'New-VirtualMachine'
+#Export-ModuleMember -Function 'New-VirtualMachine'
