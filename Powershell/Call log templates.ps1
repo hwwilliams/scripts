@@ -47,22 +47,22 @@ $Months_Days = [Ordered]@{
     # December = 31
 }
 $Titles_Widths = [Ordered]@{
-    'Time' = 12
-    'User' = 20
-    'Company' = 42
-    'Issue' = 135
-    'Phone/Ext' = 18
-    'Owner' = 10
-    'Status' = 9
-    'Ticket #' = 9
+    'Time'        = 12
+    'User'        = 20
+    'Company'     = 42
+    'Issue'       = 135
+    'Phone/Ext'   = 18
+    'Owner'       = 10
+    'Status'      = 9
+    'Ticket #'    = 9
     'Notes/Email' = 15
-    'Router' = 7
-    'Territory' = 8
+    'Router'      = 7
+    'Territory'   = 8
 }
 $Values_Colors = @{
-    'cb' = $LimeGreen
+    'cb'   = $LimeGreen
     'done' = $LimeGreen
-    'ip' = $Yellow
+    'ip'   = $Yellow
 }
 
 ## General functions.
@@ -185,19 +185,19 @@ try {
             # If conditional formatting is activtive set text to auto format to phone numbers.
             ($Workbook.Worksheets.Item($Day)).Columns('e').NumberFormat = "[<=9999999]###-####;(###) ###-####"
             # Set the value of cell in row 1 and columb 1 to 'CALL LOG' and make it bold.
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1) = 'CALL LOG'
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1).Font.Bold = $True
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1, 1) = 'CALL LOG'
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1, 1).Font.Bold = $True
             $Count = 1
             ForEach ($Items in $Titles_Widths.GetEnumerator()) {
                 $Title = $Items.Key
                 $Width = $Items.Value
                 # For each $Items in the $Titles_Widths hashtable, get each $Title and $Width and apply to row 2 and cycle through the columns per loop as follows.
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count) = $Title
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).ColumnWidth = $Width
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Interior.ColorIndex = 1
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Font.ColorIndex = 2
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count) = $Title
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).ColumnWidth = $Width
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).Interior.ColorIndex = 1
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).Font.ColorIndex = 2
                 # If conditional formatting is activtive set text color within cell to 6 (Yellow).
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(3,$Count).Interior.ColorIndex = 6
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(3, $Count).Interior.ColorIndex = 6
                 $Count++
             }
             ForEach ($Letter in $A_To_K) {
@@ -243,13 +243,15 @@ try {
                 if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
                     # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
                     $Confirmed_Directory = $True
-                } else {
+                }
+                else {
                     # Else warn the user their answer must be yes or no.
                     Write-Warning "Your answer must be yes or no."
                 }
             # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
             } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
-        } else {
+        }
+        else {
         # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
             Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
             # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
@@ -269,21 +271,24 @@ try {
             if ($Move_To_Directory.StartsWith('"')) {
                 # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
                $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
-            } elseif ($Move_To_Directory.StartsWith("'")) {
+            }
+            elseif ($Move_To_Directory.StartsWith("'")) {
                 # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
                 $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
             }
             if ($Move_To_Directory -match $Valid_Path_Regex) {
                 # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
                 $Directory_Valid = $True
-            } else {
+            }
+            else {
                 # Else warn the user that the path they specified is not valid.
                 Write-Warning "The path you specified contains invalid characters and cannot be used or created."
             }
             if (Test-Path -PathType Container $Move_To_Directory) {
                 # If $Move_To_Directory contains a folder path set $Is_Directory to true.
                 $Is_Directory = $True
-            } else {
+            }
+            else {
                 # Else warn the user that the path they specified is not valid.
                 Write-Warning "The path you specified does not point to a directory."
             }
@@ -314,13 +319,15 @@ try {
                 $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
             }
         # Else if $Move_To_Directory exists but is not a directory do as follows.
-        } else {
+        }
+        else {
             try {
                 # Attempt to remove all items within $Move_To_Directory.
                 Get-ChildItem $Move_To_Directory -Recurse -ErrorAction Stop | Remove-Item -Recurse -Force -ErrorAction Stop
                 # Attempt to remove $Move_To_Directory
                 Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
-            } catch [System.UnauthorizedAccessException] {
+            }
+            catch [System.UnauthorizedAccessException] {
                 # Write error and warning if user is not allowed to create $Move_To_Directory.
                 Write-Error "Permission Denied: Cannot access '$Move_To_Directory'"
                 Write-Warning "Cannot remove old save directory, script will clean up any left over files and then exit."
@@ -334,7 +341,8 @@ try {
         try {
             # Attempt to make new $Move_To_Directory directory.
             New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
-        } catch [System.UnauthorizedAccessException] {
+        }
+        catch [System.UnauthorizedAccessException] {
             # Write error and warning if user is not allowed to create $Move_To_Directory.
             Write-Error "Permission Denied: Cannot create '$Move_To_Directory'"
             Write-Warning "Cannot create save directory, script will clean up any left over files and then exit."
