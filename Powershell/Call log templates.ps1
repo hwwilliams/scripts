@@ -211,11 +211,13 @@ try {
                     if ($Month -eq 'September') {
                         # If $Month is equal to September then print the first four letters (Sept).
                         $Month.SubString(0,4)
-                    } else {
+                    }
+                    else {
                         # Else if $Month is not equal to September then print the first three letters (Jul for July).
                         $Month.SubString(0,3)
                     }
-                } elseif ($Begin_Sheet_Name -eq 'Month Number') {
+                }
+                elseif ($Begin_Sheet_Name -eq 'Month Number') {
                     # Else if $Begin_Sheet_Name is equal to Month Number print $Month_Number.
                     $Month_Number
                 }
@@ -232,7 +234,7 @@ try {
     $Excel_Instance.Quit()
 
     # Loop until condition is met.
-	do {
+    do {
         # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
         $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
         if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
@@ -248,18 +250,18 @@ try {
                     # Else warn the user their answer must be yes or no.
                     Write-Warning "Your answer must be yes or no."
                 }
-            # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
+                # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
             } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
         }
         else {
-        # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+            # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
             Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
             # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
             $Confirm_Move_To_Directory = 'n'
             # Set $Confirmed_Directory to true so the do..until condition is met.
             $Confirmed_Directory = $True
         }
-    # Condition is met if the $Confirmed_Directory is true.
+        # Condition is met if the $Confirmed_Directory is true.
     } until ($Confirmed_Directory)
     # If $Confirm_Move_To_Directory is like 'n' then do as follows.
     if ($Confirm_Move_To_Directory -like "n*") {
@@ -270,7 +272,7 @@ try {
             $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
             if ($Move_To_Directory.StartsWith('"')) {
                 # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
-               $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+                $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
             }
             elseif ($Move_To_Directory.StartsWith("'")) {
                 # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
@@ -296,7 +298,7 @@ try {
             if (($Directory_Valid) -and ($Is_Directory)) {
                 $Valid_Directory = $True
             }
-        # Condition is met if the $Valid_Directory is true.
+            # Condition is met if the $Valid_Directory is true.
         } until ($Valid_Directory)
     }
 
@@ -311,14 +313,14 @@ try {
                 do {
                     # Create subfolder name using current date and time.
                     $Subfolder = "New Templates ($((Get-Date -UFormat '%Y-%m-%d@%I-%M-%S-%p').ToString()))"
-                # Condition is met if $Subfolder within $Move_To_Directory does not exist.
+                    # Condition is met if $Subfolder within $Move_To_Directory does not exist.
                 } until (-not (Test-Path $(Join-Path -Path $Move_To_Directory -ChildPath $Subfolder)))
                 Write-Warning "'$Move_To_Directory' already exists and is not empty."
                 Write-Warning "To avoid possible conflicts a new subfolder will be made as with the current time and date."
                 # Set new $Move_To_Directory using new $Subfolder variable.
                 $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
             }
-        # Else if $Move_To_Directory exists but is not a directory do as follows.
+            # Else if $Move_To_Directory exists but is not a directory do as follows.
         }
         else {
             try {
