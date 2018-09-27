@@ -18,7 +18,8 @@ if (-not (Get-AzureRmResourceGroup -Name $ResourceGroupName -ErrorAction Silentl
 
 if (Get-AzureRmVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue) {
     $vNet = (Get-AzureRmVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName)
-} elseif (-not (Get-AzureRmVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue)) {
+}
+elseif (-not (Get-AzureRmVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue)) {
     $NICName = "vNIC"
     $SubnetName = "vSubnet"
     $SubnetAddressPrefix = "10.0.0.0/24"

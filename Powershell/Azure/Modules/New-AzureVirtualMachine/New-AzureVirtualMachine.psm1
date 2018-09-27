@@ -24,13 +24,13 @@ Function Set-WindowsServerPublisher() {
 
 Function New-VirtualMachine() {
     Param(
-    $AdminUser,
-    $AdminPassword,
-    $LocationName,
-    $ResourceGroupName,
-    $VMName,
-    [ValidateSet('centos','ubuntu','Windowsdesktop','windowsserver')]
-    $OSType
+        $AdminUser,
+        $AdminPassword,
+        $LocationName,
+        $ResourceGroupName,
+        $VMName,
+        [ValidateSet('centos', 'ubuntu', 'Windowsdesktop', 'windowsserver')]
+        $OSType
     )
 
     $AdminUserPassword = ConvertTo-SecureString $AdminPassword -AsPlainText -Force
@@ -38,18 +38,21 @@ Function New-VirtualMachine() {
 
     $VirtualMachine = New-AzureRmVMConfig -VMName $VMName -VMSize $VMSize
 
-    if ($OSType -icontains ('centos','ubuntu')) {
+    if ($OSType -icontains ('centos', 'ubuntu')) {
         $VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine -Linux -ComputerName $VMName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
         if ($OSType -eq 'centos') {
             Set-CentOSServerPublisher
-        } elseif ($OSType -eq 'ubuntu') {
+        }
+        elseif ($OSType -eq 'ubuntu') {
             Set-UbuntuServerPublisher
         }
-    } elseif ($OSType -ilike "windows*") {
+    }
+    elseif ($OSType -ilike "windows*") {
         $VirtualMachine = Set-AzureRmVMOperatingSystem -VM $VirtualMachine -Windows -ComputerName $VMName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
         if ($OSType -eq 'Windowsdesktop') {
             Set-WindowsDesktopPublisher
-        } elseif ($OSType -eq 'windowsserver') {
+        }
+        elseif ($OSType -eq 'windowsserver') {
             Set-WindowsServerPublisher
         }
     }

@@ -41,13 +41,13 @@ if (-not (Get-AzureRmPublicIpAddress -Name "Public-$VMName" -ResourceGroupName $
 }
 
 if (-not (Get-AzureRmNetworkSecurityGroup -Name $NSGName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue)) {
-$AllowRDP = New-AzureRmNetworkSecurityRuleConfig -Name rdp-rule -Description "Allow RDP" -Access Allow -Protocol Tcp -Direction Inbound `
--Priority 100 -SourceAddressPrefix '96.66.217.173' -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 3389
+    $AllowRDP = New-AzureRmNetworkSecurityRuleConfig -Name rdp-rule -Description "Allow RDP" -Access Allow -Protocol Tcp -Direction Inbound `
+        -Priority 100 -SourceAddressPrefix '96.66.217.173' -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 3389
 
-$AllowHTTP = New-AzureRmNetworkSecurityRuleConfig -Name web-rule -Description "Allow HTTP" -Access Allow -Protocol Tcp -Direction Inbound `
--Priority 101 -SourceAddressPrefix '96.66.217.173' -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 80
+    $AllowHTTP = New-AzureRmNetworkSecurityRuleConfig -Name web-rule -Description "Allow HTTP" -Access Allow -Protocol Tcp -Direction Inbound `
+        -Priority 101 -SourceAddressPrefix '96.66.217.173' -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 80
 
-$NetworkSecurityGroup = New-AzureRmNetworkSecurityGroup -Name $NSGName -ResourceGroupName $ResourceGroupName -Location $LocationName -SecurityRules $AllowRDP,$AllowHTTP
+    $NetworkSecurityGroup = New-AzureRmNetworkSecurityGroup -Name $NSGName -ResourceGroupName $ResourceGroupName -Location $LocationName -SecurityRules $AllowRDP, $AllowHTTP
 }
 
 if (-not (Get-AzureRmNetworkInterface -Name $VMName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue)) {
@@ -73,4 +73,3 @@ $VirtualMachine = Add-AzureRmVMNetworkInterface -VM $($VirtualMachine) -Id $NIC.
 $VirtualMachine = Set-AzureRmVMSourceImage -VM $($VirtualMachine) -PublisherName $Publisher -Offer $PublisherOffer -Skus $PublisherSkus -Version latest
 
 New-AzureRmVM -VM $($VirtualMachine) -ResourceGroupName $ResourceGroupName -Location $LocationName -Verbose
- 
