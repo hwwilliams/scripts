@@ -88,7 +88,7 @@ def walk_the_path(valid_directory_set):
                 if file.endswith(tuple(extension_list)):
                     path_walked[file] = root
     if len(path_walked) == 0:
-        print(f'{bcolors.YELLOW}No files found when searching for files ending with ".{extension_limit}".{bcolors.RESET}')
+        print(f'{bcolors.YELLOW}No files found when searching for files ending with ".{extension_list}".{bcolors.RESET}')
         terminate()
     elif len(path_walked) >= 1:
         return path_walked
