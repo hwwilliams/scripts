@@ -23,7 +23,7 @@ $Cell_Value_Condition = [Microsoft.Office.Interop.Excel.XlFormatConditionType]::
 $Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlEqual
 $Not_Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlNotEqual
 # Excel ComObject colors.
-$RoyalBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
+$LightSkyBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
 $LimeGreen = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLimeGreen
 $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 
