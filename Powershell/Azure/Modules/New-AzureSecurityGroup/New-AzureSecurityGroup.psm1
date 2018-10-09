@@ -1,4 +1,4 @@
-﻿Function New-AzureSecurityGroup {
+Function New-AzureSecurityGroup {
     Param (
 
     )
@@ -13,4 +13,3 @@
         $NIC.NetworkSecurityGroup.Id = $NetworkSecurityGroup.Id
         $NIC | Set-AzureRmNetworkInterface
     }
-}
