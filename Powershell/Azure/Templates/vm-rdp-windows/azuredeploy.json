@@ -139,6 +139,9 @@
       "name": "[parameters('virtualNetworkName')]",
       "apiVersion": "2016-03-30",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
