@@ -2,6 +2,35 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
+    "vNetSettings": {
+      "type": "object",
+      "defaultValue": {
+        "name": "vNet1",
+        "location": "[resourceGroup().location]",
+        "addressPrefixes": [
+          {
+            "name": "Subnet01Prefix",
+            "addressPrefix": "10.0.0.0/16"
+          }
+        ],
+        "subnets": [
+          {
+            "name": "Subnet01",
+            "addressPrefix": "10.0.0.0/24"
+          }
+        ]
+      },
+      "metadata": {
+        "description": "Set the name, location, and the subnet addresses of the virtual network for the main resource group."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[parameters('vNetSettings').location]",
+      "metadata": {
+        "description": "Location for all other resources."
+      }
+    },
     "adminUsername": {
       "type": "string",
       "defaultValue": "AzAdmin",
@@ -16,8 +45,11 @@
       }
     },
     "vmName": {
-      "type": "string",
-      "defaultValue": "MyWindowsVM",
+      "type": "array",
+      "defaultValue": [
+        "DC01",
+        "FILESVR01"
+      ],
       "metadata": {
         "description": "Name of the virtual machine."
       }
@@ -52,36 +84,48 @@
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
       }
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "MyNetwork",
-      "metadata": {
-        "description": "Name of the virtual network."
-      }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sawinvm')]",
+    "storageAccountNamePrefix": "[uniquestring(resourceGroup().id)]",
     "nicName": "[concat(parameters('vmName'), '-NIC')]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
     "publicIPAddressName": "[concat(parameters('vmName'), '-PublicIP')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnetName'))]",
+    "SubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VNetSettings').name, parameters('VNetSettings').subnets[0].name)]",
     "nsgName": "[concat(parameters('vmName'), '-NSG')]"
   },
   "resources": [
     {
+      "apiVersion": "2017-05-10",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[parameters('secondResourceGroup')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "name": "[variables('secondStorageName')]",
+              "apiVersion": "2017-06-01",
+              "location": "[parameters('secondStorageLocation')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "Storage",
+              "properties": {}
+            }
+          ]
+        },
+        "parameters": {}
+      }
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
+      "name": "[concat(variables('storageAccountNamePrefix'), '-Network')]",
       "apiVersion": "2016-01-01",
       "location": "[parameters('location')]",
       "sku": {
@@ -169,7 +213,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[variables('SubnetID')]"
               }
             }
           }
@@ -182,7 +226,7 @@
       "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountNamePrefix'), '-Network'))]",
         "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
