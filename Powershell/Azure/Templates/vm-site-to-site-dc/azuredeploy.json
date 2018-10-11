@@ -2,6 +2,54 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the virtual machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the virtual machine."
+            }
+        },
+        "companyName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the company that this template is being deployed to."
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('companyName'), '-DC01')]",
+            "metadata": {
+                "description": "The name of the virtual machine that will be configured as a domain controller."
+            }
+        },
+        "vnicName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('vmName'), '-vNIC')]",
+            "metadata": {
+                "description": "The name of the virtual network interface that will be assigned to the virtual machine."
+            }
+        },
+        "windowsOSVersion": {
+            "type": "string",
+            "defaultValue": "Standard_B2s",
+            "allowedValues": [
+                "Standard_B1s",
+                "Standard_B1ms",
+                "Standard_B2s",
+                "Standard_A1_v2",
+                "Standard_B2ms",
+                "Standard_A2_v2",
+                "Standard_D2_v3"
+            ],
+            "metadata": {
+                "description": "Size of the Virtual Machine."
+            }
+        },
         "vpnType": {
             "type": "string",
             "defaultValue": "RouteBased",
@@ -119,13 +167,15 @@
         }
     },
     "variables": {
-        "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetName'),'GatewaySubnet')]"
+        "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetName'),'GatewaySubnet')]",
+        "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetName'), parameters('vnetVmSubnetName'))]",
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id), '-', parameters('vmName'), '-storage')]"
     },
     "resources": [
         {
             "type": "Microsoft.Network/localNetworkGateways",
-            "apiVersion": "2015-06-15",
             "name": "[parameters('localGatewayName')]",
+            "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "localNetworkAddressSpace": {
@@ -135,9 +185,9 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "name": "[parameters('vnetGatewayConnectionName')]",
             "type": "Microsoft.Network/connections",
+            "name": "[parameters('vnetGatewayConnectionName')]",
+            "apiVersion": "2015-01-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('vnetGatewayName'))]",
@@ -156,9 +206,9 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('vnetName')]",
+            "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
@@ -183,18 +233,18 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('vnetGatewayPublicIpName')]",
+            "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "[parameters('vnetGatewayPublicIpAllocation')]"
             }
         },
         {
-            "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[parameters('vnetGatewayName')]",
+            "apiVersion": "2017-06-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', parameters('vnetGatewayPublicIpName'))]",
@@ -222,6 +272,94 @@
                 "gatewayType": "Vpn",
                 "vpnType": "[parameters('vpnType')]",
                 "enableBgp": "false"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('vnicName')]",
+            "apiVersion": "2018-08-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('vmSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('vnicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_A2"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[parameters('windowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": [
+                        {
+                            "diskSizeGB": 1023,
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('vnicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
             }
         }
     ],
