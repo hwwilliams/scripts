@@ -224,5 +224,6 @@
                 "enableBgp": "false"
             }
         }
-    ]
+    ],
+    "outputs": {}
 }
