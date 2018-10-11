@@ -69,7 +69,7 @@
         },
         "azureVnetGatewayConnectionName": {
             "type": "string",
-            "defaultValue": "azvnetgatewaylink",
+            "defaultValue": "azvnetgatewayconnection",
             "metadata": {
                 "description": "Arbitrary name for the connection between the Azure virtual network and the local/on-premise network"
             }
