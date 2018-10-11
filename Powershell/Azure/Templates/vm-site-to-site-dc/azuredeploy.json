@@ -15,9 +15,7 @@
         },
         "localGatewayName": {
             "type": "string",
-            "defaultValue": {
-                "name": "localgateway"
-            },
+            "defaultValue": "localgateway",
             "metadata": {
                 "description": "Arbitrary name for gateway resource representing your local/on-premise gateway"
             }
@@ -69,18 +67,18 @@
                 "description": "Arbitrary name for the new Azure gateway"
             }
         },
+        "azureVnetGatewayConnectionName": {
+            "type": "string",
+            "defaultValue": "azvnetgatewaylink",
+            "metadata": {
+                "description": "Arbitrary name for the connection between the Azure virtual network and the local/on-premise network"
+            }
+        },
         "azureVnetGatewaySubnetPrefix": {
             "type": "string",
             "defaultValue": "10.5.200.0/29",
             "metadata": {
                 "description": "CIDR block for gateway subnet, subset of the Azure Vnet Address Prefix address space"
-            }
-        },
-        "azureVnetGatewayPublicIpName": {
-            "type": "string",
-            "defaultValue": "azvnetgatewaypublicip",
-            "metadata": {
-                "description": "Arbitrary name for public IP used for the Azure gateway"
             }
         },
         "azureVnetGatewayPublicIpAllocationMethod": {
@@ -94,6 +92,13 @@
                 "description": "Allocation method for the Azure Vnet Gateway Public IP, it can be dynamic or static."
             }
         },
+        "azureVnetGatewayPublicIpName": {
+            "type": "string",
+            "defaultValue": "azvnetgatewaypublicip",
+            "metadata": {
+                "description": "Arbitrary name for public IP used for the Azure gateway"
+            }
+        },
         "gatewaySku": {
             "type": "string",
             "defaultValue": "Basic",
@@ -104,13 +109,6 @@
             ],
             "metadata": {
                 "description": "The Sku of the Gateway. This must be one of Basic, Standard or HighPerformance."
-            }
-        },
-        "azureVnetGatewayConnectionName": {
-            "type": "string",
-            "defaultValue": "azvnetgatewaylink",
-            "metadata": {
-                "description": "Arbitrary name for the connection between the Azure virtual network and the local/on-premise network"
             }
         },
         "sharedKey": {
