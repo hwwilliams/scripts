@@ -32,56 +32,56 @@
                 "description": "CIDR block representing the address space of your local/on-premise network's Subnet"
             }
         },
-        "azureVnetName": {
+        "vnetName": {
             "type": "string",
             "defaultValue": "azvnet",
             "metadata": {
-                "description": "Arbitrary name for the Azure Virtual Network"
+                "description": "Arbitrary name for the Azure virtual network"
             }
         },
-        "azureVnetAddressPrefix": {
+        "vnetAddressPrefix": {
             "type": "string",
             "defaultValue": "10.5.0.0/16",
             "metadata": {
-                "description": "CIDR block representing the address space of the Azure Vnet"
+                "description": "CIDR block representing the address space of the Azure virtual network"
             }
         },
-        "azureVnetSubnetName": {
+        "vnetVmSubnetName": {
             "type": "string",
             "defaultValue": "azvnetsubnet01",
             "metadata": {
                 "description": "Arbitrary name for the Azure virtual network subnet"
             }
         },
-        "azureVnetVmSubnetPrefix": {
+        "vnetVmSubnetPrefix": {
             "type": "string",
             "defaultValue": "10.5.1.0/24",
             "metadata": {
-                "description": "CIDR block for VM subnet, subset of the Azure Vnet Address Prefix address space"
+                "description": "CIDR block for VM subnet, subset of the Azure virtual network Address Prefix address space"
             }
         },
-        "azureVnetGatewayName": {
+        "vnetGatewayName": {
             "type": "string",
             "defaultValue": "azvnetgateway",
             "metadata": {
                 "description": "Arbitrary name for the new Azure gateway"
             }
         },
-        "azureVnetGatewayConnectionName": {
+        "vnetGatewayConnectionName": {
             "type": "string",
             "defaultValue": "azvnetgatewayconnection",
             "metadata": {
                 "description": "Arbitrary name for the connection between the Azure virtual network and the local/on-premise network"
             }
         },
-        "azureVnetGatewaySubnetPrefix": {
+        "vnetGatewaySubnetPrefix": {
             "type": "string",
             "defaultValue": "10.5.200.0/29",
             "metadata": {
-                "description": "CIDR block for gateway subnet, subset of the Azure Vnet Address Prefix address space"
+                "description": "CIDR block for gateway subnet, subset of the Azure virtual network Address Prefix address space"
             }
         },
-        "azureVnetGatewayPublicIpAllocationMethod": {
+        "vnetGatewayPublicIpAllocationMethod": {
             "type": "string",
             "defaultValue": "Dynamic",
             "allowedValues": [
@@ -89,14 +89,14 @@
                 "Static"
             ],
             "metadata": {
-                "description": "Allocation method for the Azure Vnet Gateway Public IP, it can be dynamic or static."
+                "description": "Allocation method for the Azure virtual network Gateway Public IP, it can be dynamic or static."
             }
         },
-        "azureVnetGatewayPublicIpName": {
+        "vnetGatewayPublicIpName": {
             "type": "string",
             "defaultValue": "azvnetgatewaypublicip",
             "metadata": {
-                "description": "Arbitrary name for public IP used for the Azure gateway"
+                "description": "Arbitrary name for public IP used for the Azure virtual network gateway"
             }
         },
         "gatewaySku": {
@@ -119,7 +119,7 @@
         }
     },
     "variables": {
-        "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('azureVnetName'),'GatewaySubnet')]"
+        "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetName'),'GatewaySubnet')]"
     },
     "resources": [
         {
@@ -136,16 +136,16 @@
         },
         {
             "apiVersion": "2015-06-15",
-            "name": "[parameters('azureVnetGatewayConnectionName')]",
+            "name": "[parameters('vnetGatewayConnectionName')]",
             "type": "Microsoft.Network/connections",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('azureVnetGatewayName'))]",
+                "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('vnetGatewayName'))]",
                 "[concat('Microsoft.Network/localNetworkGateways/', parameters('localGatewayName'))]"
             ],
             "properties": {
                 "virtualNetworkGateway1": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('azureVnetGatewayName'))]"
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vnetGatewayName'))]"
                 },
                 "localNetworkGateway2": {
                     "id": "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGatewayName'))]"
@@ -158,25 +158,25 @@
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('azureVnetName')]",
+            "name": "[parameters('vnetName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[parameters('azureVNetAddressPrefix')]"
+                        "[parameters('vnetAddressPrefix')]"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('azurevNetSubnetName')]",
+                        "name": "[parameters('vnetVmSubnetName')]",
                         "properties": {
-                            "addressPrefix": "[parameters('azureVnetVmSubnetPrefix')]"
+                            "addressPrefix": "[parameters('vnetVmSubnetPrefix')]"
                         }
                     },
                     {
                         "name": "GatewaySubnet",
                         "properties": {
-                            "addressPrefix": "[parameters('azureVnetGatewaySubnetPrefix')]"
+                            "addressPrefix": "[parameters('vnetGatewaySubnetPrefix')]"
                         }
                     }
                 ]
@@ -185,20 +185,20 @@
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('azureVnetGatewayPublicIpName')]",
+            "name": "[parameters('vnetGatewayPublicIpName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "publicIPAllocationMethod": "[parameters('azureVnetGatewayPublicIpAllocationMethod')]"
+                "publicIPAllocationMethod": "[parameters('vnetGatewayPublicIpAllocationMethod')]"
             }
         },
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/virtualNetworkGateways",
-            "name": "[parameters('azureVnetGatewayName')]",
+            "name": "[parameters('vnetGatewayName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('azureVnetGatewayPublicIpName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('azureVnetName'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('vnetGatewayPublicIpName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -209,7 +209,7 @@
                                 "id": "[variables('gatewaySubnetRef')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('azureVnetGatewayPublicIpName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('vnetGatewayPublicIpName'))]"
                             }
                         },
                         "name": "vnetGatewayConfig"
