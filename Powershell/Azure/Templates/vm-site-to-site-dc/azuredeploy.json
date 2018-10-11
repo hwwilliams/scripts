@@ -81,7 +81,7 @@
                 "description": "CIDR block for gateway subnet, subset of the Azure virtual network Address Prefix address space"
             }
         },
-        "vnetGatewayPublicIpAllocationMethod": {
+        "vnetGatewayPublicIpAllocation": {
             "type": "string",
             "defaultValue": "Dynamic",
             "allowedValues": [
@@ -188,7 +188,7 @@
             "name": "[parameters('vnetGatewayPublicIpName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "publicIPAllocationMethod": "[parameters('vnetGatewayPublicIpAllocationMethod')]"
+                "publicIPAllocationMethod": "[parameters('vnetGatewayPublicIpAllocation')]"
             }
         },
         {
