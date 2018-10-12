@@ -14,13 +14,11 @@
    Using the ProviderAndType Parameter Set:
    Get-AzureRmResourceProviderLatestApiVersion -ResourceProvider Microsoft.Storage -ResourceType storageAccounts
 #>
-function Get-AzureRmResourceProviderLatestApiVersion
-{
+function Get-AzureRmResourceProviderLatestApiVersion {
     [CmdletBinding()]
     [Alias()]
     [OutputType([string])]
-    Param
-    (
+    Param (
         [Parameter(ParameterSetName = 'Full', Mandatory = $true, Position = 0)]
         [string]$Type,
 
@@ -33,15 +31,13 @@ function Get-AzureRmResourceProviderLatestApiVersion
         [switch]$IncludePreview
     )
 
-    # retrieving the resource providers is time consuming therefore we store
+    # Retrieving the resource providers is time consuming therefore we store
     # them in a script variable to accelerate subsequent requests.
-    if (-not $script:resourceProvider)
-    {
+    if (-not $script:resourceProvider) {
         $script:resourceProvider = Get-AzureRmResourceProvider
     }
 
-    if ($PSCmdlet.ParameterSetName -eq 'Full')
-    {
+    if ($PSCmdlet.ParameterSetName -eq 'Full') {
         $ResourceProvider = ($Type -replace "\/.*")
         $ResourceType = ($Type -replace ".*?\/(.+)", '$1')
     }
@@ -52,12 +48,10 @@ function Get-AzureRmResourceProviderLatestApiVersion
         $_.ResourceTypes.ResourceTypeName -eq $ResourceType
     }
 
-    if ($IncludePreview)
-    {
+    if ($IncludePreview) {
         $provider.ResourceTypes.ApiVersions[0]
     }
-    else
-    {
+    else {
         $provider.ResourceTypes.ApiVersions | Where-Object {
             $_ -notmatch '-preview'
         } | Select-Object -First 1
