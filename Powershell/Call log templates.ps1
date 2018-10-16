@@ -1,16 +1,35 @@
-﻿## User defined Variables
-# If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
-# If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
-# If you leave $Begin_Sheet_Name as "default" then "Month Number" will be used
+﻿<#
+.Synopsis
+    Creates an Excel workbook for each month in the year with conditional formatting for use as a call log
+.DESCRIPTION
+    This script crates an Excel workbook for each month in the year to use as call log and conditional formatting
+    has been setup on several columns to help with readability.
+
+    $Begin_Sheet_Name:
+        If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
+        If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
+        If you leave $Begin_Sheet_Name as "default" then "Month Number" will be used
+
+    $Base_Subdirectory_Name:
+        Replace "default" with the name of the folder that will be used or created, if necessary, within the $Base_Directory_Path.
+
+    $Base_Directory_Path:
+        Replace "default" with the root save directory for the excel files, example: "C:\Users\$env:username\Documents\"
+
+    $Year:
+        If you wish to add a certain year to the end of the excel file then set it here.
+
+    $Year_Folder_Name:
+        If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
+        If the $Year variable is not set then it does not matter if this is true or false.
+
+#>
+
+## User defined Variables
 $Begin_Sheet_Name = "default"
-# Replace "default" with the name of the folder that will be used or created, if necessary, within the $Base_Directory_Path.
 $Base_Subdirectory_Name = "default"
-# Replace "default" with the root save directory for the excel files, example: "C:\Users\$env:username\Documents\"
 $Base_Directory_Path = "default"
-# If you wish to add a certain year to the end of the excel file then set it here.
 $Year = 2018
-# If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
-# If the $Year variable is not set then it does not matter if this is true or false.
 $Year_Folder_Name = $True
 
 ## Excel ComObject Conditions and Operators.
@@ -67,7 +86,7 @@ $Values_Colors = @{
 
 ## General functions.
 # Clean-Up function removes work directory, and resets all variables.
-Function Clean-Up {
+Function Invoke-CleanUp {
     Get-ChildItem $Work_Directory -Recurse -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $Work_Directory -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Variable * -ErrorAction SilentlyContinue
@@ -89,6 +108,7 @@ if ((-not ($Begin_Sheet_Name)) -or ($Begin_Sheet_Name -eq "default")) {
 if ((-not ($Base_Directory_Path)) -or ($Base_Directory_Path -eq "default")) {
     $Base_Directory_Path = "C:\Users\$env:username\Documents\"
 }
+
 # Setup final move directory based on user defined variables
 if ((-not ($Base_Subdirectory_Name)) -or ($Base_Subdirectory_Name -eq "default")) {
     $Base_Subdirectory_Name = "Call log templates"
@@ -104,6 +124,7 @@ try {
     # Make temp work directory and 'done' subdirectory.
     $Work_Directory = New-TemporaryDirectory
     $Save_Directory = Join-Path -Path $Work_Directory -ChildPath 'Done'
+
     # If $Save_Directory does not exist create it.
     if (-Not (Test-Path $Save_Directory)) {
         New-Item -ItemType Directory -Path $Save_Directory
@@ -125,6 +146,7 @@ try {
     ForEach ($Day in 1..4) {
         $Workbook.Worksheets.Add([System.Reflection.Missing]::Value, $Workbook.Worksheets.Item($Workbook.Worksheets.Count))
     }
+
     # A variable is set for the path to the new template workbook, it is then saved and closed.
     $Temp_Workbook = Join-Path -Path $Work_Directory -ChildPath "Temp Workbook.xlsx"
     $Workbook.SaveAs($Temp_Workbook, $Excel_Format)
@@ -363,5 +385,5 @@ try {
 
 finally {
     # Run Clean-Up function.
-    Clean-Up
+    Invoke-CleanUp
 }
