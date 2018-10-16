@@ -2,13 +2,13 @@ import distutils.dir_util
 import os
 import shutil
 
-# drive_path = (input('Path to drive: ')).strip()
-# file_path = (input('Path to movie list: ')).strip()
-# movie_path = (input('Path to movies: ')).strip()
+drive_path = (input('Path to drive: ')).strip()
+file_path = (input('Path to movie list: ')).strip()
+movie_path = (input('Path to movies: ')).strip()
 
-drive_path = ('E:\\').strip()
-file_path = ("E:\\Movies.txt").strip()
-movie_path = ('E:\\').strip()
+# drive_path = ('E:\\').strip()
+# file_path = ("E:\\Movies.txt").strip()
+# movie_path = ('E:\\').strip()
 
 for path in (drive_path, file_path, movie_path):
     if path.endswith("'"):
@@ -33,5 +33,5 @@ if not os.path.exists(movie_destination):
 for root, subdirs, files in os.walk(movie_path):
     for item in movies_list:
         if item in root.lower():
-            distutils.dir_util.copy_tree(root, movie_destination)
+            #distutils.dir_util.copy_tree(root, movie_destination)
             print(f'Found match for {item} as {root}')

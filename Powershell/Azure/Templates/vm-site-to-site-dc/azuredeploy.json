@@ -234,7 +234,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[parameters('vnetGatewayPublicIpAllocation')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[if(equals(copyIndex(),'2'), parameters('prefixLabel'), json('null'))]"
+                    "domainNameLabel": "[if(equals(copyIndex(),'1'), parameters('prefixLabel'), json('null'))]"
                 }
             },
             "copy": {
