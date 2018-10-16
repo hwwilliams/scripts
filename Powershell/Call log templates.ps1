@@ -27,7 +27,7 @@ $Cell_Value_Condition = [Microsoft.Office.Interop.Excel.XlFormatConditionType]::
 $Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlEqual
 $Not_Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlNotEqual
 # Excel ComObject colors.
-$RoyalBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
+$LightSkyBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
 $LimeGreen = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLimeGreen
 $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 
@@ -48,22 +48,22 @@ $Months_Days = @{
     # December = 31
 }
 $Titles_Widths = [Ordered]@{
-    'Time' = 12
-    'User' = 20
-    'Company' = 42
-    'Issue' = 135
-    'Phone/Ext' = 18
-    'Owner' = 10
-    'Status' = 9
-    'Ticket #' = 9
+    'Time'        = 12
+    'User'        = 20
+    'Company'     = 42
+    'Issue'       = 135
+    'Phone/Ext'   = 18
+    'Owner'       = 10
+    'Status'      = 9
+    'Ticket #'    = 9
     'Notes/Email' = 15
-    'Router' = 7
-    'Territory' = 7
+    'Router'      = 7
+    'Territory'   = 7
 }
 $Values_Colors = @{
-    'cb' = $LimeGreen
+    'cb'   = $LimeGreen
     'done' = $LimeGreen
-    'ip' = $Yellow
+    'ip'   = $Yellow
 }
 
 ## General functions.
@@ -111,7 +111,7 @@ try {
     $Workbook.SaveAs($Temp_Workbook, $Excel_Format)
     $Workbook.Close()
     # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
-    
+
     # Begin building each monthly workbook
     ForEach ($Items in $Months_Days.GetEnumerator()) {
         # Pull month and days per month from the $Months_Days hashtable (dictionary).
@@ -139,8 +139,8 @@ try {
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.Bold = $True
             # Set conditional formatting on column F from cell 4 to 999, activtive if they contain any text.
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Not_Equal_Operator, '=ISTEXT(f4:f999)')
-            # If conditional formatting is activtive turn the cell $RoyalBlue.
-            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $RoyalBlue
+            # If conditional formatting is activtive turn the cell $LightSkyBlue.
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $LightSkyBlue
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.ColorIndex = 1
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.Bold = $True
             $Count = 1
@@ -165,19 +165,19 @@ try {
             # If conditional formatting is activtive set text to auto format to phone numbers.
             ($Workbook.Worksheets.Item($Day)).Columns('e').NumberFormat = "[<=9999999]###-####;(###) ###-####"
             # Set the value of cell in row 1 and columb 1 to 'CALL LOG' and make it bold.
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1) = 'CALL LOG'
-            ($Workbook.Worksheets.Item($Day)).Cells.Item(1,1).Font.Bold = $True
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1, 1) = 'CALL LOG'
+            ($Workbook.Worksheets.Item($Day)).Cells.Item(1, 1).Font.Bold = $True
             $Count = 1
             ForEach ($Items in $Titles_Widths.GetEnumerator()) {
                 $Title = $Items.Key
                 $Width = $Items.Value
                 # For each $Items in the $Titles_Widths hashtable, get each $Title and $Width and apply to row 2 and cycle through the columns per loop as follows.
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count) = $Title
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).ColumnWidth = $Width
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Interior.ColorIndex = 1
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(2,$Count).Font.ColorIndex = 2
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count) = $Title
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).ColumnWidth = $Width
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).Interior.ColorIndex = 1
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(2, $Count).Font.ColorIndex = 2
                 # If conditional formatting is activtive set text color within cell to 6 (Yellow).
-                ($Workbook.Worksheets.Item($Day)).Cells.Item(3,$Count).Interior.ColorIndex = 6
+                ($Workbook.Worksheets.Item($Day)).Cells.Item(3, $Count).Interior.ColorIndex = 6
                 $Count++
             }
             ForEach ($Letter in $A_To_K) {
@@ -207,7 +207,7 @@ try {
     # If $ConfirmSave is not true then do as follows.
     if (-not ($ConfirmSave)) {
         # Loop until condition is met.
-    	do {
+        do {
             # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
             $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
             if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
@@ -218,21 +218,23 @@ try {
                     if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
                         # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
                         $Confirmed_Directory = $True
-                    } else {
+                    }
+                    else {
                         # Else warn the user their answer must be yes or no.
                         Write-Warning "Your answer must be yes or no."
                     }
-                # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
+                    # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
                 } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
-            } else {
-            # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+            }
+            else {
+                # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
                 Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
                 # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
                 $Confirm_Move_To_Directory = 'n'
                 # Set $Confirmed_Directory to true so the do..until condition is met.
                 $Confirmed_Directory = $True
             }
-        # Condition is met if the $Confirmed_Directory is true.
+            # Condition is met if the $Confirmed_Directory is true.
         } until ($Confirmed_Directory)
         # If $Confirm_Move_To_Directory is like 'n' then do as follows.
         if ($Confirm_Move_To_Directory -like "n*") {
@@ -243,22 +245,25 @@ try {
                 $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
                 if ($Move_To_Directory.StartsWith('"')) {
                     # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
-                   $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
-                } elseif ($Move_To_Directory.StartsWith("'")) {
+                    $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+                }
+                elseif ($Move_To_Directory.StartsWith("'")) {
                     # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
                     $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
                 }
                 if ($Move_To_Directory -match $Valid_Path_Regex) {
                     # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
                     $Directory_Valid = $True
-                } else {
+                }
+                else {
                     # Else warn the user that the path they specified is not valid.
                     Write-Warning "The path you specified contains invalid characters and cannot be used or created."
                 }
                 if (Test-Path -PathType Container $Move_To_Directory) {
                     # If $Move_To_Directory contains a folder path set $Is_Directory to true.
                     $Is_Directory = $True
-                } else {
+                }
+                else {
                     # Else warn the user that the path they specified is not valid.
                     Write-Warning "The path you specified does not point to a directory."
                 }
@@ -266,7 +271,7 @@ try {
                 if (($Directory_Valid) -and ($Is_Directory)) {
                     $Valid_Directory = $True
                 }
-            # Condition is met if the $Valid_Directory is true.
+                # Condition is met if the $Valid_Directory is true.
             } until ($Valid_Directory)
         }
     }
@@ -282,21 +287,23 @@ try {
                 do {
                     # Create subfolder name using current date and time.
                     $Subfolder = "New Templates ($((Get-Date -UFormat '%Y-%m-%d@%I-%M-%S-%p').ToString()))"
-                # Condition is met if $Subfolder within $Move_To_Directory does not exist.
+                    # Condition is met if $Subfolder within $Move_To_Directory does not exist.
                 } until (-not (Test-Path $(Join-Path -Path $Move_To_Directory -ChildPath $Subfolder)))
                 Write-Warning "'$Move_To_Directory' already exists and is not empty."
                 Write-Warning "To avoid possible conflicts a new subfolder will be made as with the current time and date."
                 # Set new $Move_To_Directory using new $Subfolder variable.
                 $Move_To_Directory = Join-Path -Path $Move_To_Directory -ChildPath $Subfolder
             }
-        # Else if $Move_To_Directory exists but is not a directory do as follows.
-        } else {
+            # Else if $Move_To_Directory exists but is not a directory do as follows.
+        }
+        else {
             try {
                 # Attempt to remove all items within $Move_To_Directory.
                 Get-ChildItem $Move_To_Directory -Recurse -ErrorAction Stop | Remove-Item -Recurse -Force -ErrorAction Stop
                 # Attempt to remove $Move_To_Directory
                 Remove-Item $Move_To_Directory -Recurse -Force -ErrorAction SilentlyContinue
-            } catch [System.UnauthorizedAccessException] {
+            }
+            catch [System.UnauthorizedAccessException] {
                 # Write error and warning if user is not allowed to create $Move_To_Directory.
                 Write-Error "Permission Denied: Cannot access '$Move_To_Directory'"
                 Write-Warning "Cannot remove old save directory, script will clean up any left over files and then exit."
@@ -310,7 +317,8 @@ try {
         try {
             # Attempt to make new $Move_To_Directory directory.
             New-Item -ItemType Directory -Path $Move_To_Directory -ErrorAction Stop
-        } catch [System.UnauthorizedAccessException] {
+        }
+        catch [System.UnauthorizedAccessException] {
             # Write error and warning if user is not allowed to create $Move_To_Directory.
             Write-Error "Permission Denied: Cannot create '$Move_To_Directory'"
             Write-Warning "Cannot create save directory, script will clean up any left over files and then exit."
