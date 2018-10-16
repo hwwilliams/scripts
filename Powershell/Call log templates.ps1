@@ -27,7 +27,7 @@ $Cell_Value_Condition = [Microsoft.Office.Interop.Excel.XlFormatConditionType]::
 $Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlEqual
 $Not_Equal_Operator = [Microsoft.Office.Interop.Excel.XlFormatConditionOperator]::xlNotEqual
 # Excel ComObject colors.
-$RoyalBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
+$LightSkyBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
 $LimeGreen = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLimeGreen
 $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 
@@ -57,8 +57,13 @@ $Titles_Widths = [Ordered]@{
     'Status' = 9
     'Ticket #' = 9
     'Notes/Email' = 15
+<<<<<<< HEAD
     'Router' = 7
     'Territory' = 7
+=======
+    'Router'      = 7
+    'Territory'   = 7
+>>>>>>> wip
 }
 $Values_Colors = @{
     'cb' = $LimeGreen
@@ -139,8 +144,8 @@ try {
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(1).Font.Bold = $True
             # Set conditional formatting on column F from cell 4 to 999, activtive if they contain any text.
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Not_Equal_Operator, '=ISTEXT(f4:f999)')
-            # If conditional formatting is activtive turn the cell $RoyalBlue.
-            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $RoyalBlue
+            # If conditional formatting is activtive turn the cell $LightSkyBlue.
+            (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Interior.Color = $LightSkyBlue
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.ColorIndex = 1
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Item(2).Font.Bold = $True
             $Count = 1
@@ -207,7 +212,11 @@ try {
     # If $ConfirmSave is not true then do as follows.
     if (-not ($ConfirmSave)) {
         # Loop until condition is met.
+<<<<<<< HEAD
     	do {
+=======
+        do {
+>>>>>>> wip
             # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
             $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
             if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
@@ -218,6 +227,7 @@ try {
                     if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
                         # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
                         $Confirmed_Directory = $True
+<<<<<<< HEAD
                     } else {
                         # Else warn the user their answer must be yes or no.
                         Write-Warning "Your answer must be yes or no."
@@ -226,13 +236,29 @@ try {
                 } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
             } else {
             # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+=======
+                    }
+                    else {
+                        # Else warn the user their answer must be yes or no.
+                        Write-Warning "Your answer must be yes or no."
+                    }
+                    # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
+                } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
+            }
+            else {
+                # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+>>>>>>> wip
                 Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
                 # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
                 $Confirm_Move_To_Directory = 'n'
                 # Set $Confirmed_Directory to true so the do..until condition is met.
                 $Confirmed_Directory = $True
             }
+<<<<<<< HEAD
         # Condition is met if the $Confirmed_Directory is true.
+=======
+            # Condition is met if the $Confirmed_Directory is true.
+>>>>>>> wip
         } until ($Confirmed_Directory)
         # If $Confirm_Move_To_Directory is like 'n' then do as follows.
         if ($Confirm_Move_To_Directory -like "n*") {
@@ -243,6 +269,7 @@ try {
                 $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
                 if ($Move_To_Directory.StartsWith('"')) {
                     # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
+<<<<<<< HEAD
                    $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
                 } elseif ($Move_To_Directory.StartsWith("'")) {
                     # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
@@ -267,6 +294,35 @@ try {
                     $Valid_Directory = $True
                 }
             # Condition is met if the $Valid_Directory is true.
+=======
+                    $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+                }
+                elseif ($Move_To_Directory.StartsWith("'")) {
+                    # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
+                    $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
+                }
+                if ($Move_To_Directory -match $Valid_Path_Regex) {
+                    # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
+                    $Directory_Valid = $True
+                }
+                else {
+                    # Else warn the user that the path they specified is not valid.
+                    Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+                }
+                if (Test-Path -PathType Container $Move_To_Directory) {
+                    # If $Move_To_Directory contains a folder path set $Is_Directory to true.
+                    $Is_Directory = $True
+                }
+                else {
+                    # Else warn the user that the path they specified is not valid.
+                    Write-Warning "The path you specified does not point to a directory."
+                }
+                # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
+                if (($Directory_Valid) -and ($Is_Directory)) {
+                    $Valid_Directory = $True
+                }
+                # Condition is met if the $Valid_Directory is true.
+>>>>>>> wip
             } until ($Valid_Directory)
         }
     }
