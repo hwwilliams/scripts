@@ -1,21 +1,17 @@
-﻿# Two passable script arguments
-# - ConfirmSave: If this argument is passed then the script will default to saving to the directory
-#   defined in the '$Move_To_Directory' variable.
-# - CallLogYear: If passed with a 4 digit number ranging from 1000-2999,
-#   the valid year will be appended to the file name of all Excel files created.
-[CmdletBinding()]
-Param (
-    [Switch] $ConfirmSave = $False,
-    [ValidatePattern('^[12][0-9]{3}$')]
-    [Int] $Year
-)
-
-## General Dictionaries, Variables, and Other Declarations.
-# The Move_To_Directory variable is the default save location, currently it makes a folder and
-# saves to it within the currently logged in user's documents folder.
-# Also trim any leading or trailing spaces.
-$Move_To_Directory = ("C:\Users\$env:username\Documents\Call log templates$(if ($Year) {" $Year"})\").Trim()
-$Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
+﻿## User defined Variables
+# If you set $Begin_Sheet_Name to be "Month Name" then each sheet will have a short hand version of the month i.e. Sept for September.
+# If you set $Begin_Sheet_Name to be "Month Number" then each sheet will be named with the month number i.e. 9 for September.
+# If you leave $Begin_Sheet_Name as "default" then "Month Number" will be used
+$Begin_Sheet_Name = "default"
+# Replace "default" with the name of the folder that will be used or created, if necessary, within the $Base_Directory_Path.
+$Base_Subdirectory_Name = "default"
+# Replace "default" with the root save directory for the excel files, example: "C:\Users\$env:username\Documents\"
+$Base_Directory_Path = "default"
+# If you wish to add a certain year to the end of the excel file then set it here.
+$Year = 2018
+# If you would like the year to be added to the end of the folder created within the $Move_To_Directory then set this to true.
+# If the $Year variable is not set then it does not matter if this is true or false.
+$Year_Folder_Name = $True
 
 ## Excel ComObject Conditions and Operators.
 Add-Type -AssemblyName Microsoft.Office.Interop.Excel
@@ -31,21 +27,24 @@ $LightSkyBlue = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLightSkyBlue
 $LimeGreen = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbLimeGreen
 $Yellow = [Microsoft.Office.Interop.Excel.XlRgbColor]::rgbYellow
 
+# Regex pattern to match any valid file or folder paths.
+$Valid_Path_Regex = '^[a-z]:[/\\][^{0}]*$' -f [Regex]::Escape(([IO.Path]::InvalidPathChars -Join ''))
+
 ## Hashtables (Dictionaries)
 $A_To_K = @(); for ([byte]$i = [char]'A'; $i -le [char]'K'; $i++) { $A_To_K += [char]$i }
-$Months_Days = @{
-    January = 5
-    # Febuary = 28
-    # March = 31
-    # April = 30
-    # May = 31
-    # June = 30
-    # July = 31
-    # August = 31
-    # September = 30
-    # October = 31
-    # November = 30
-    # December = 31
+$Months_Days = [Ordered]@{
+    'January'   = 31
+    'Febuary'   = 28
+    'March'     = 31
+    'April'     = 30
+    'May'       = 31
+    'June'      = 30
+    'July'      = 31
+    'August'    = 31
+    'September' = 30
+    'October'   = 31
+    'November'  = 30
+    'December'  = 31
 }
 $Titles_Widths = [Ordered]@{
     'Time'        = 12
@@ -58,7 +57,7 @@ $Titles_Widths = [Ordered]@{
     'Ticket #'    = 9
     'Notes/Email' = 15
     'Router'      = 7
-    'Territory'   = 7
+    'Territory'   = 8
 }
 $Values_Colors = @{
     'cb'   = $LimeGreen
@@ -75,12 +74,32 @@ Function Clean-Up {
     Remove-Module * -ErrorAction SilentlyContinue
     $error.Clear()
 }
+
 # New-TemporaryDirectory function makes a new directory in the user's temp folder.
 Function New-TemporaryDirectory {
     $Temp_Parent_Path = [System.IO.Path]::GetTempPath()
     [String] $Temp_Name = [System.Guid]::NewGuid()
     New-Item -ItemType Directory -Path (Join-Path -Path $Temp_Parent_Path -ChildPath $Temp_Name)
 }
+
+if ((-not ($Begin_Sheet_Name)) -or ($Begin_Sheet_Name -eq "default")) {
+    $Begin_Sheet_Name = "Month Number"
+}
+
+if ((-not ($Base_Directory_Path)) -or ($Base_Directory_Path -eq "default")) {
+    $Base_Directory_Path = "C:\Users\$env:username\Documents\"
+}
+# Setup final move directory based on user defined variables
+if ((-not ($Base_Subdirectory_Name)) -or ($Base_Subdirectory_Name -eq "default")) {
+    $Base_Subdirectory_Name = "Call log templates"
+}
+
+if (($Year) -and ($Year_Folder_Name)) {
+    $Base_Subdirectory_Name = "$Base_Subdirectory_Name $Year"
+}
+
+$Move_To_Directory = Join-Path -Path $Base_Directory_Path -ChildPath $Base_Subdirectory_Name
+
 try {
     # Make temp work directory and 'done' subdirectory.
     $Work_Directory = New-TemporaryDirectory
@@ -113,6 +132,7 @@ try {
     # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
 
     # Begin building each monthly workbook
+    $Month_Number = 1
     ForEach ($Items in $Months_Days.GetEnumerator()) {
         # Pull month and days per month from the $Months_Days hashtable (dictionary).
         $Month = $Items.Key
@@ -128,7 +148,7 @@ try {
             }
         }
         # For each day (sheet) in the workbook set conditional formatting.
-        ForEach ($Day in 1..$Days) {
+        ForEach ($Day in 1..($Days + 1)) {
             # Set conditional formatting on column F from cell 4 to 999, activtive if they contain 'aa'.
             (($Workbook.Worksheets.Item($Day)).Range('f4:f999')).FormatConditions.Add($Cell_Value_Condition, $Equal_Operator, 'aa')
             # If conditional formatting is activtive turn the cell $LimeGreen.
@@ -186,12 +206,20 @@ try {
             }
             # Name each sheet based on the currently selected month in short form and add the day on the end.
             $Workbook.Worksheets.Item($Day).Name = "$(
-                if ($Month -eq 'September') {
-                    # If $Month is equal to September then print the first four letters (Sept).
-                    $Month.SubString(0,4)
-                } else {
-                    # Else print the first three letters (Jul for July).
-                    $Month.SubString(0,3)
+                if ($Begin_Sheet_Name -eq 'Month Name') {
+                # If $Begin_Sheet_Name is equal to Month Name do as follows.
+                    if ($Month -eq 'September') {
+                        # If $Month is equal to September then print the first four letters (Sept).
+                        $Month.SubString(0,4)
+                    }
+                    else {
+                        # Else if $Month is not equal to September then print the first three letters (Jul for July).
+                        $Month.SubString(0,3)
+                    }
+                }
+                elseif ($Begin_Sheet_Name -eq 'Month Number') {
+                    # Else if $Begin_Sheet_Name is equal to Month Number print $Month_Number.
+                    $Month_Number
                 }
             )-$Day"
             # Rename last sheet to 'Extra'.
@@ -201,79 +229,77 @@ try {
         $Workbook.SaveAs((Join-Path -Path $Save_Directory -ChildPath "$Month$(if ($Year) { " $Year" }).xlsx"), $Excel_Format)
         $Workbook.Close()
         # Note: if the Excel workbooks are not saved with the correct file extension and Excel format, and then closed after saving, the files will become corrupted.
+        $Month_Number++
     }
     $Excel_Instance.Quit()
 
-    # If $ConfirmSave is not true then do as follows.
-    if (-not ($ConfirmSave)) {
-        # Loop until condition is met.
-        do {
-            # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
-            $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
-            if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
-                # Loop until condition is met.
-                do {
-                    # Ask if the default save directory is okay to use, trim any leading or trailing spaces.
-                    $Confirm_Move_To_Directory = (Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)").Trim()
-                    if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
-                        # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
-                        $Confirmed_Directory = $True
-                    }
-                    else {
-                        # Else warn the user their answer must be yes or no.
-                        Write-Warning "Your answer must be yes or no."
-                    }
-                    # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
-                } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
-            }
-            else {
-                # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
-                Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
-                # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
-                $Confirm_Move_To_Directory = 'n'
-                # Set $Confirmed_Directory to true so the do..until condition is met.
-                $Confirmed_Directory = $True
-            }
-            # Condition is met if the $Confirmed_Directory is true.
-        } until ($Confirmed_Directory)
-        # If $Confirm_Move_To_Directory is like 'n' then do as follows.
-        if ($Confirm_Move_To_Directory -like "n*") {
+    # Loop until condition is met.
+    do {
+        # If $Move_To_Directory is true and contains a file or folder path that is valid, not necessary that it exists, do as follows.
+        $Confirmed_Directory = $False; $Confirm_Move_To_Directory = $False
+        if (($Move_To_Directory) -and ($Move_To_Directory -match $Valid_Path_Regex)) {
             # Loop until condition is met.
             do {
-                # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
-                $Directory_Valid = $False; $Is_Directory = $False; $Valid_Directory = $False
-                $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
-                if ($Move_To_Directory.StartsWith('"')) {
-                    # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
-                    $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
-                }
-                elseif ($Move_To_Directory.StartsWith("'")) {
-                    # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
-                    $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
-                }
-                if ($Move_To_Directory -match $Valid_Path_Regex) {
-                    # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
-                    $Directory_Valid = $True
+                # Ask if the default save directory is okay to use, trim any leading or trailing spaces.
+                $Confirm_Move_To_Directory = (Read-Host "Call log templates will be saved to '$Move_To_Directory', is this okay? (y/n)").Trim()
+                if ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*") {
+                    # If $Confirm_Move_To_Directory contains some string like y or n then set $Confirmed_Directory to true.
+                    $Confirmed_Directory = $True
                 }
                 else {
-                    # Else warn the user that the path they specified is not valid.
-                    Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+                    # Else warn the user their answer must be yes or no.
+                    Write-Warning "Your answer must be yes or no."
                 }
-                if (Test-Path -PathType Container $Move_To_Directory) {
-                    # If $Move_To_Directory contains a folder path set $Is_Directory to true.
-                    $Is_Directory = $True
-                }
-                else {
-                    # Else warn the user that the path they specified is not valid.
-                    Write-Warning "The path you specified does not point to a directory."
-                }
-                # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
-                if (($Directory_Valid) -and ($Is_Directory)) {
-                    $Valid_Directory = $True
-                }
-                # Condition is met if the $Valid_Directory is true.
-            } until ($Valid_Directory)
+                # Condition is met if $Confirm_Move_To_Directory contains some string like y or n.
+            } until ($Confirm_Move_To_Directory -like "y*" -or $Confirm_Move_To_Directory -like "n*")
         }
+        else {
+            # If $Move_To_Directory is false or does not contain a file or folder path that is valid, do as follows.
+            Write-Warning '"$Move_To_Directory" was not set or contains invalid characters to use in a path.'
+            # Set $Confirm_Move_To_Directory to 'n' so that it prompts the user to enter a valid path.
+            $Confirm_Move_To_Directory = 'n'
+            # Set $Confirmed_Directory to true so the do..until condition is met.
+            $Confirmed_Directory = $True
+        }
+        # Condition is met if the $Confirmed_Directory is true.
+    } until ($Confirmed_Directory)
+    # If $Confirm_Move_To_Directory is like 'n' then do as follows.
+    if ($Confirm_Move_To_Directory -like "n*") {
+        # Loop until condition is met.
+        do {
+            # Ask which path the user would like to use as the save directory, trim any leading or trailing spaces.
+            $Directory_Valid = $False; $Is_Directory = $False; $Valid_Directory = $False
+            $Move_To_Directory = (Read-Host "Which directory would you like the Call log templates to be saved to? (Example: C:\Users\$env:username\Documents)").Trim()
+            if ($Move_To_Directory.StartsWith('"')) {
+                # If $Move_To_Directory starts with a double quote then remove it, also trim any leading or trailing spaces.
+                $Move_To_Directory = ($Move_To_Directory.Trim('"')).Trim()
+            }
+            elseif ($Move_To_Directory.StartsWith("'")) {
+                # Else if $Move_To_Directory starts with a single quote then remove it, also trim any leading or trailing spaces.
+                $Move_To_Directory = ($Move_To_Directory.Trim("'")).Trim()
+            }
+            if ($Move_To_Directory -match $Valid_Path_Regex) {
+                # If $Move_To_Directory contains a file or folder path that is valid, not necessary that it exists, set $Valid_Path to true.
+                $Directory_Valid = $True
+            }
+            else {
+                # Else warn the user that the path they specified is not valid.
+                Write-Warning "The path you specified contains invalid characters and cannot be used or created."
+            }
+            if (Test-Path -PathType Container $Move_To_Directory) {
+                # If $Move_To_Directory contains a folder path set $Is_Directory to true.
+                $Is_Directory = $True
+            }
+            else {
+                # Else warn the user that the path they specified is not valid.
+                Write-Warning "The path you specified does not point to a directory."
+            }
+            # If both $Valid_Path and $Is_Directory are true then set $Valid_Directory to true.
+            if (($Directory_Valid) -and ($Is_Directory)) {
+                $Valid_Directory = $True
+            }
+            # Condition is met if the $Valid_Directory is true.
+        } until ($Valid_Directory)
     }
 
     # If $Move_To_Directory exists then do as follows.
