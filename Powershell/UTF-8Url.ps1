@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
-    [Parameter(Position = 1)]
+    [Parameter(
+        Mandatory = $true,
+        Position = 1
+    )]
     [string] $URL,
     [switch] $DecodeURL
 )
