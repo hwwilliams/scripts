@@ -67,11 +67,18 @@ def walk_the_path(valid_directory_set):
 
 def fetch_files(path_walked_dictionary):
     chapterRegex = '[ \t]*chapter[ \t]*[0-9]*'
+    epilogueRegex = '[ \t]*epilogue[ \t]*.*'
+    prologueRegex = '[ \t]*prologue[ \t]*.*'
     for file, root in path_walked_dictionary.items():
         audioFile = eyed3.load(os.path.join(root, file))
         tag = audioFile.tag
         tag.album_artist = tag.artist
-        tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
+        if 'prologue' in tag.title.lower():
+            tag.album = re.sub(prologueRegex, '', tag.title, flags=re.I)
+        elif 'epilogue' in tag.title.lower():
+            tag.album = re.sub(epilogueRegex, '', tag.title, flags=re.I)
+        else:
+            tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
         # print(f'Title: {tag.title}')
         # print(f'Album: {tag.album}')
         # print(f'Artist: {tag.artist}')
