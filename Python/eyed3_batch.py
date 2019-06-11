@@ -8,8 +8,9 @@ def main():
     search_directory_set = check_path(
         'Which directory would you like to search? ')
     series_title = get_series_title('What is the name of the book? ')
+    proper_series_title = capitalize_title(series_title)
     path_walked = walk_the_path(search_directory_set)
-    set_tags(path_walked, series_title)
+    set_tags(path_walked, proper_series_title)
     terminate()
 
 
@@ -72,29 +73,54 @@ def get_series_title(series_title_prompt):
     return series_title
 
 
-def set_tags(path_walked_dictionary, series_title):
+def capitalize_title(series_title):
+    ignore = {'a', 'an', 'and', 'as', 'at', 'but', 'by',
+              'down', 'for', 'from', 'if', 'in', 'into',
+              'like', 'near', 'nor', 'of', 'off', 'on',
+              'once', 'onto', 'or', 'over', 'past', 'so',
+              'than', 'that', 'the', 'till', 'to', 'upon',
+              'v', 'v.', 'vs', 'vs.', 'when', 'with', 'yet'}
+    proper_series_title = ''
+    for word in series_title.split(' '):
+        if word.lower() in ignore:
+            if word == series_title.split(' ')[0] or word == series_title.split(' ')[-1]:
+                if not word.isupper():
+                    if not word.endswith('s') & (word.replace('s', '')).isupper():
+                        word = word.capitalize()
+            else:
+                word = word.lower()
+        elif not word.isupper():
+            if not word.endswith('s') & (word.replace('s', '')).isupper():
+                if not (word.lower()).startswith('ipv'):
+                    word = word.capitalize()
+        proper_series_title += str(f'{word} ')
+    return proper_series_title
+
+
+def set_tags(path_walked_dictionary, proper_series_title):
     for file, root in path_walked_dictionary.items():
         audioFile = eyed3.load(os.path.join(root, file))
         tag = audioFile.tag
         tag.album_artist = tag.artist
-        tag.album = series_title
-        series_track_num = '{0:0=2d}'.format(tag.track_num[0])
+        tag.album = proper_series_title
+        disc_num = '{0:0=2d}'.format(tag.disc_num[0])
+        track_num = '{0:0=2d}'.format(tag.track_num[0])
         if isinstance(tag.disc_num[0], int):
-            if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
-                tag.title = (f'{series_title} Disc {tag.disc_num[0]} Prologue')
+            if 'prologue' in tag.title.lower() or track_num == 00:
+                tag.title = (f'{proper_series_title} Disc {disc_num} Prologue')
             elif 'epilogue' in tag.title.lower():
-                tag.title = (f'{series_title} Disc {tag.disc_num[0]} Epilogue')
+                tag.title = (f'{proper_series_title} Disc {disc_num} Epilogue')
             else:
                 tag.title = (
-                    f'{series_title} Disc {tag.disc_num[0]} Chapter {series_track_num}')
+                    f'{proper_series_title} Disc {disc_num} Chapter {track_num}')
         else:
-            if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
-                tag.title = (f'{series_title} Prologue')
+            if 'prologue' in tag.title.lower() or track_num == 00:
+                tag.title = (f'{proper_series_title} Prologue')
             elif 'epilogue' in tag.title.lower():
-                tag.title = (f'{series_title} Epilogue')
+                tag.title = (f'{proper_series_title} Epilogue')
             else:
                 tag.title = (
-                    f'{series_title} Chapter {series_track_num}')
+                    f'{proper_series_title} Chapter {track_num}')
         tag.save()
 
 
