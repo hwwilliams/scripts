@@ -1,6 +1,7 @@
 import eyed3
 import os
 import sys
+import re
 
 
 def main():
@@ -65,21 +66,18 @@ def walk_the_path(valid_directory_set):
 
 
 def fetch_files(path_walked_dictionary):
+    chapterRegex = '[ \t]*chapter[ \t]*[0-9]*'
     for file, root in path_walked_dictionary.items():
-        audiofile = eyed3.load(os.path.join(root, file))
-        print(audiofile.tag.artist)
-        print(audiofile.tag.title)
-        print(audiofile.tag.album)
+        audioFile = eyed3.load(os.path.join(root, file))
+        tag = audioFile.tag
+        tag.album_artist = tag.artist
+        tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
+        print(f'Title: {tag.title}')
+        print(f'Album: {tag.album}')
+        print(f'Artist: {tag.artist}')
+        print(f'Album Artist: {tag.album_artist}')
+        # tag.save()
 
 
 if __name__ == '__main__':
     main()
-
-# audiofile = eyed3.load("song.mp3")
-# audiofile.tag.artist = u"Integrity"
-# audiofile.tag.album = u"Humanity Is The Devil"
-# audiofile.tag.album_artist = u"Integrity"
-# audiofile.tag.title = u"Hollow"
-# audiofile.tag.track_num = 2
-
-# audiofile.tag.save()
