@@ -7,8 +7,11 @@ import re
 def main():
     search_directory_set = check_path(
         'Which directory would you like to search? ')
+    # series_title = get_series_title('What is the name of the book?')
     path_walked = walk_the_path(search_directory_set)
-    fetch_files(path_walked)
+    fetch_tags(path_walked)
+    # check_tags(path_walked)
+    # set_tags(path_walked, series_title)
     terminate()
 
 
@@ -65,8 +68,33 @@ def walk_the_path(valid_directory_set):
         return path_walked
 
 
-def fetch_files(path_walked_dictionary):
-    chapterRegex = '[ \t]*chapter[ \t]*[0-9]*'
+# def check_tags(path_walked_dictionary):
+#     for file, root in path_walked_dictionary.items():
+#         audioFile = eyed3.load(os.path.join(root, file))
+#         tag = audioFile.tag
+#         if len(tag.track_num)
+#         tag.album_artist = tag.artist
+#         tag.title = (f'{series_title} Chapter {tag.track_num}')
+#         tag.save()
+
+
+def get_series_title(series_title_prompt):
+    series_title = input(series_title_prompt)
+    series_title = series_title.strip().replace('  ', ' ')
+    return series_title
+
+
+def set_tags(path_walked_dictionary, series_title):
+    for file, root in path_walked_dictionary.items():
+        audioFile = eyed3.load(os.path.join(root, file))
+        tag = audioFile.tag
+        tag.album_artist = tag.artist
+        tag.title = (f'{series_title} Chapter {tag.track_num}')
+        tag.save()
+
+
+def fetch_tags(path_walked_dictionary):
+    chapterRegex = '[ \t]*chapter[ \t]*.*'
     epilogueRegex = '[ \t]*epilogue[ \t]*.*'
     prologueRegex = '[ \t]*prologue[ \t]*.*'
     for file, root in path_walked_dictionary.items():
@@ -79,11 +107,11 @@ def fetch_files(path_walked_dictionary):
             tag.album = re.sub(epilogueRegex, '', tag.title, flags=re.I)
         else:
             tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
-        # print(f'Title: {tag.title}')
-        # print(f'Album: {tag.album}')
-        # print(f'Artist: {tag.artist}')
-        # print(f'Album Artist: {tag.album_artist}')
-        tag.save()
+        print(f'Title: {tag.title}')
+        print(f'Album: {tag.album}')
+        print(f'Artist: {tag.artist}')
+        print(f'Album Artist: {tag.album_artist}')
+        # tag.save()
 
 
 if __name__ == '__main__':
