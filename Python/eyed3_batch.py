@@ -66,8 +66,10 @@ def walk_the_path(valid_directory_set):
 
 def fetch_files(path_walked_dictionary):
     for file, root in path_walked_dictionary.items():
-        audiofile = eyed3.AudioInfo(os.path.join(root, file))
-        print(audiofile)
+        audiofile = eyed3.load(os.path.join(root, file))
+        print(audiofile.tag.artist)
+        print(audiofile.tag.title)
+        print(audiofile.tag.album)
 
 
 if __name__ == '__main__':
