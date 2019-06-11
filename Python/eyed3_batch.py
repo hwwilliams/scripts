@@ -7,11 +7,9 @@ import re
 def main():
     search_directory_set = check_path(
         'Which directory would you like to search? ')
-    # series_title = get_series_title('What is the name of the book?')
+    series_title = get_series_title('What is the name of the book?')
     path_walked = walk_the_path(search_directory_set)
-    fetch_tags(path_walked)
-    # check_tags(path_walked)
-    # set_tags(path_walked, series_title)
+    set_tags(path_walked, series_title)
     terminate()
 
 
@@ -68,16 +66,6 @@ def walk_the_path(valid_directory_set):
         return path_walked
 
 
-# def check_tags(path_walked_dictionary):
-#     for file, root in path_walked_dictionary.items():
-#         audioFile = eyed3.load(os.path.join(root, file))
-#         tag = audioFile.tag
-#         if len(tag.track_num)
-#         tag.album_artist = tag.artist
-#         tag.title = (f'{series_title} Chapter {tag.track_num}')
-#         tag.save()
-
-
 def get_series_title(series_title_prompt):
     series_title = input(series_title_prompt)
     series_title = series_title.strip().replace('  ', ' ')
@@ -89,29 +77,14 @@ def set_tags(path_walked_dictionary, series_title):
         audioFile = eyed3.load(os.path.join(root, file))
         tag = audioFile.tag
         tag.album_artist = tag.artist
-        tag.title = (f'{series_title} Chapter {tag.track_num}')
-        tag.save()
-
-
-def fetch_tags(path_walked_dictionary):
-    chapterRegex = '[ \t]*chapter[ \t]*.*'
-    epilogueRegex = '[ \t]*epilogue[ \t]*.*'
-    prologueRegex = '[ \t]*prologue[ \t]*.*'
-    for file, root in path_walked_dictionary.items():
-        audioFile = eyed3.load(os.path.join(root, file))
-        tag = audioFile.tag
-        tag.album_artist = tag.artist
-        if 'prologue' in tag.title.lower():
-            tag.album = re.sub(prologueRegex, '', tag.title, flags=re.I)
+        if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
+            tag.title = (f'{series_title} Prologue')
         elif 'epilogue' in tag.title.lower():
-            tag.album = re.sub(epilogueRegex, '', tag.title, flags=re.I)
+            tag.title = (f'{series_title} Epilogue')
         else:
-            tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
-        print(f'Title: {tag.title}')
-        print(f'Album: {tag.album}')
-        print(f'Artist: {tag.artist}')
-        print(f'Album Artist: {tag.album_artist}')
-        # tag.save()
+            series_track_num = '{0:0=2d}'.format(tag.track_num[0])
+            tag.title = (f'{series_title} Chapter {series_track_num}')
+        tag.save()
 
 
 if __name__ == '__main__':
