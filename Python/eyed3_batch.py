@@ -78,13 +78,23 @@ def set_tags(path_walked_dictionary, series_title):
         tag = audioFile.tag
         tag.album_artist = tag.artist
         tag.album = series_title
-        if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
-            tag.title = (f'{series_title} Prologue')
-        elif 'epilogue' in tag.title.lower():
-            tag.title = (f'{series_title} Epilogue')
+        series_track_num = '{0:0=2d}'.format(tag.track_num[0])
+        if tag.disc_num:
+            if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
+                tag.title = (f'{series_title} Disc {tag.disc_num[0]} Prologue')
+            elif 'epilogue' in tag.title.lower():
+                tag.title = (f'{series_title} Disc {tag.disc_num[0]} Epilogue')
+            else:
+                tag.title = (
+                    f'{series_title} Disc {tag.disc_num[0]} Chapter {series_track_num}')
         else:
-            series_track_num = '{0:0=2d}'.format(tag.track_num[0])
-            tag.title = (f'{series_title} Chapter {series_track_num}')
+            if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
+                tag.title = (f'{series_title} Prologue')
+            elif 'epilogue' in tag.title.lower():
+                tag.title = (f'{series_title} Epilogue')
+            else:
+                tag.title = (
+                    f'{series_title} Chapter {series_track_num}')
         tag.save()
 
 
