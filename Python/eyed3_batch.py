@@ -72,11 +72,11 @@ def fetch_files(path_walked_dictionary):
         tag = audioFile.tag
         tag.album_artist = tag.artist
         tag.album = re.sub(chapterRegex, '', tag.title, flags=re.I)
-        print(f'Title: {tag.title}')
-        print(f'Album: {tag.album}')
-        print(f'Artist: {tag.artist}')
-        print(f'Album Artist: {tag.album_artist}')
-        # tag.save()
+        # print(f'Title: {tag.title}')
+        # print(f'Album: {tag.album}')
+        # print(f'Artist: {tag.artist}')
+        # print(f'Album Artist: {tag.album_artist}')
+        tag.save()
 
 
 if __name__ == '__main__':
