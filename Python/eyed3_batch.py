@@ -70,6 +70,9 @@ def fetch_files(path_walked_dictionary):
         print(audiofile)
 
 
+if __name__ == '__main__':
+    main()
+
 # audiofile = eyed3.load("song.mp3")
 # audiofile.tag.artist = u"Integrity"
 # audiofile.tag.album = u"Humanity Is The Devil"
