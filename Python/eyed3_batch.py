@@ -7,7 +7,7 @@ import re
 def main():
     search_directory_set = check_path(
         'Which directory would you like to search? ')
-    series_title = get_series_title('What is the name of the book?')
+    series_title = get_series_title('What is the name of the book? ')
     path_walked = walk_the_path(search_directory_set)
     set_tags(path_walked, series_title)
     terminate()
@@ -77,6 +77,7 @@ def set_tags(path_walked_dictionary, series_title):
         audioFile = eyed3.load(os.path.join(root, file))
         tag = audioFile.tag
         tag.album_artist = tag.artist
+        tag.album = series_title
         if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
             tag.title = (f'{series_title} Prologue')
         elif 'epilogue' in tag.title.lower():
