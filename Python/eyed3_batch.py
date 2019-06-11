@@ -79,7 +79,7 @@ def set_tags(path_walked_dictionary, series_title):
         tag.album_artist = tag.artist
         tag.album = series_title
         series_track_num = '{0:0=2d}'.format(tag.track_num[0])
-        if tag.disc_num:
+        if isinstance(tag.disc_num[0], int):
             if 'prologue' in tag.title.lower() or tag.track_num[0] == 0:
                 tag.title = (f'{series_title} Disc {tag.disc_num[0]} Prologue')
             elif 'epilogue' in tag.title.lower():
