@@ -1,7 +1,6 @@
 import eyed3
 import os
 import sys
-import re
 
 
 def main():
@@ -70,7 +69,6 @@ def walk_the_path(valid_directory_set):
 
 def get_series_title(series_title_prompt):
     series_title = input(series_title_prompt)
-    series_title = series_title.replace(': ', ' - ')
     series_title = series_title.strip().replace('  ', ' ')
     return series_title
 
@@ -111,6 +109,7 @@ def set_tags(path_walked_dictionary, proper_series_title):
 
 
 def set_files(path_walked_dictionary, proper_series_title):
+    proper_series_title = proper_series_title.replace(': ', ' - ')
     for file, root in path_walked_dictionary.items():
         file_extension = file.split('.')[-1]
         audioFile = eyed3.load(os.path.join(root, file))
