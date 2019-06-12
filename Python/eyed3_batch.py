@@ -7,10 +7,11 @@ import re
 def main():
     search_directory_set = check_path(
         'Which directory would you like to search? ')
+    path_walked = walk_the_path(search_directory_set)
     series_title = get_series_title('What is the name of the book? ')
     proper_series_title = capitalize_title(series_title)
-    path_walked = walk_the_path(search_directory_set)
     set_tags(path_walked, proper_series_title)
+    set_files(path_walked, proper_series_title)
     terminate()
 
 
@@ -103,26 +104,26 @@ def set_tags(path_walked_dictionary, proper_series_title):
         tag = audioFile.tag
         tag.album_artist = tag.artist
         tag.album = proper_series_title
-        disc_num = '{0:0=2d}'.format(tag.disc_num[0])
         track_num = '{0:0=2d}'.format(tag.track_num[0])
-        if isinstance(tag.disc_num[0], int):
-            if 'prologue' in tag.title.lower() or track_num == 00:
-                tag.title = (f'{proper_series_title} Disc {disc_num} Prologue')
-            elif 'epilogue' in tag.title.lower():
-                tag.title = (f'{proper_series_title} Disc {disc_num} Epilogue')
-            else:
-                tag.title = (
-                    f'{proper_series_title} Disc {disc_num} Chapter {track_num}')
-        else:
-            if 'prologue' in tag.title.lower() or track_num == 00:
-                tag.title = (f'{proper_series_title} Prologue')
-            elif 'epilogue' in tag.title.lower():
-                tag.title = (f'{proper_series_title} Epilogue')
-            else:
-                tag.title = (
-                    f'{proper_series_title} Chapter {track_num}')
+        tag.title = (f'Chapter {track_num}')
         tag.save()
 
+
+def set_files(path_walked_dictionary, proper_series_title):
+    for file, root in path_walked_dictionary.items():
+        file_extension = file.split('.')[-1]
+        audioFile = eyed3.load(os.path.join(root, file))
+        tag = audioFile.tag
+        track_num = '{0:0=2d}'.format(tag.track_num[0])
+        if isinstance(tag.disc_num[0], int):
+            disc_num = '{0:0=2d}'.format(tag.disc_num[0])
+            final_title = (f'{proper_series_title} Disc {disc_num} Chapter {track_num}')
+        else:
+            final_title = (f'{proper_series_title} Chapter {track_num}')
+        final_title = final_title.strip().replace('  ', ' ')
+        original_file = os.path.join(root, file)
+        final_file = os.path.join(root, (f'{final_title}.{file_extension}'))
+        os.rename(original_file, final_file)
 
 if __name__ == '__main__':
     main()
