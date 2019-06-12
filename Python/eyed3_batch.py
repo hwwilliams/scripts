@@ -70,6 +70,7 @@ def walk_the_path(valid_directory_set):
 
 def get_series_title(series_title_prompt):
     series_title = input(series_title_prompt)
+    series_title = series_title.replace(': ', ' - ')
     series_title = series_title.strip().replace('  ', ' ')
     return series_title
 
@@ -117,13 +118,15 @@ def set_files(path_walked_dictionary, proper_series_title):
         track_num = '{0:0=2d}'.format(tag.track_num[0])
         if isinstance(tag.disc_num[0], int):
             disc_num = '{0:0=2d}'.format(tag.disc_num[0])
-            final_title = (f'{proper_series_title} Disc {disc_num} Chapter {track_num}')
+            final_title = (
+                f'{proper_series_title} Disc {disc_num} Chapter {track_num}')
         else:
             final_title = (f'{proper_series_title} Chapter {track_num}')
         final_title = final_title.strip().replace('  ', ' ')
         original_file = os.path.join(root, file)
         final_file = os.path.join(root, (f'{final_title}.{file_extension}'))
         os.rename(original_file, final_file)
+
 
 if __name__ == '__main__':
     main()
