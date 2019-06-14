@@ -4,9 +4,12 @@ import collections
 
 
 def main():
-    valid_directory = checkPath('Which path? ')
-    audioBooks = countBook(valid_directory)
-    getBookName(audioBooks)
+    validDirectory = checkPath('Which path? ')
+    audioBooks = countBook(validDirectory)
+    indexBookName(audioBooks)
+    bookIndexList = bookIndexPrompt('Enter the number for the book, separated by commas, else press enter to continue. ')
+    if len(bookIndexList) > 0:
+        bookNameIndex = checkBookName(audioBooks, bookIndexList)
     terminate()
 
 
@@ -15,45 +18,67 @@ def terminate():
     sys.exit()
 
 
-def checkPath(directory_path_prompt):
+def checkPath(directoryPathPrompt):
     while True:
-        input_directory = input(directory_path_prompt)
-        if input_directory.lower() == 'exit':
+        inputDirectory = input(directoryPathPrompt)
+        if inputDirectory.lower() == 'exit':
             terminate()
-        if (input_directory.strip()).startswith('.\\'):
-            input_directory = (input_directory.strip()).replace('.\\', '', 1)
-        input_directory = os.path.join((os.getcwd()), input_directory)
-        if os.path.isdir(input_directory):
-            valid_directory = input_directory
-            return valid_directory
+        if (inputDirectory.strip()).startswith('.\\'):
+            inputDirectory = (inputDirectory.strip()).replace('.\\', '', 1)
+        inputDirectory = os.path.join((os.getcwd()), inputDirectory)
+        if os.path.isdir(inputDirectory):
+            validDirectory = inputDirectory
+            return validDirectory
         else:
             print('Invalid Path: Please enter a valid directory path.')
             continue
 
 
-def countBook(valid_directory):
+def countBook(validDirectory):
     audioBooks = collections.OrderedDict()
-    for book in os.scandir(valid_directory):
+    for book in os.scandir(validDirectory):
         if not book.name.startswith('.') and book.is_dir():
-            audioBooks[book.name] = valid_directory
+            audioBooks[book.name] = validDirectory
     if len(audioBooks) == 1:
         print(f'{len(audioBooks)} book found.')
     elif len(audioBooks) > 1:
         print(f'{len(audioBooks)} books found.')
     elif len(audioBooks) == 0:
         print('No books were found.')
-    # print(list(books))
     return audioBooks
 
 
-def getBookName(audioBooks):
-    print('The following books were found:')
-    for bookName, valid_directory in audioBooks.items():
+def indexBookName(audioBooks):
+    print('List of found books:')
+    for bookName, validDirectory in audioBooks.items():
         audioBookIndex = list(audioBooks.keys()).index(bookName)
         print(f'{audioBookIndex}. {bookName}')
-    wrongBookName = input(
-        'If any of the book names are wrong, enter their number. ')
-    print(list(audioBooks)[int(wrongBookName)])
+    # print(list(audioBooks)[int(wrongBookIndex)])
+
+
+def bookIndexPrompt(prompt):
+    print('Check if any of the book names are wrong.')
+    while True:
+        bookIndexList = []
+        wrongBookIndex = (input(prompt).strip())
+        try:
+            for bookIndex in wrongBookIndex.split(','):
+                bookIndexList.append(int(bookIndex.replace(' ', '')))
+        except ValueError:
+            bookIndexList = []
+            print('Skipping book name correction...')
+        return bookIndexList
+
+
+def checkBookName(audioBooks, bookIndexList):
+    print(bookIndexList)
+    bookNameIndex = {}
+    for bookName, validDirectory in audioBooks.items():
+        for bookIndex in bookIndexList:
+            correctBookName = (input(f'What is the correct name for "{bookName}"? '))
+            bookNameIndex[bookIndex] = correctBookName
+            print(bookNameIndex)
+    return bookNameIndex
 
 
 if __name__ == '__main__':
