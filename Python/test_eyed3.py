@@ -83,6 +83,10 @@ def check_tags(path_walked_dictionary, series_title):
         print(f'Album: {tag.album}')
         print(f'Track Number: {tag.track_num}')
         print(f'Disc: {tag.disc_num}')
+        if tag.disc_num:
+          print('Disc is true')
+        else:
+          print('Disc is false')
 
 
 if __name__ == '__main__':

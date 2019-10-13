@@ -1,4 +1,4 @@
-﻿$Search_Directory = "Z:\Plex"
+﻿$Search_Directory = ""
 
 do {
     $Empty_Directories = Get-ChildItem $Search_Directory -directory -recurse | Where-Object { (Get-ChildItem $_.fullName -Force).count -eq 0 } | Select-Object -expandproperty FullName
