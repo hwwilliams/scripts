@@ -1,5 +1,6 @@
 # Find installation of location of Dell OpenManage
-function Get-OMReportPath {
+function Get-OMReportPath
+{
   # Set the two most common installation locations
   $DellOMLocations = [System.Collections.ArrayList]@(
     "C:\Program Files\Dell\SysMgt\oma\bin\omreport.exe"
@@ -10,13 +11,16 @@ function Get-OMReportPath {
   # Pull all local drives from the computer to search for the Dell software if not found in the two common installation locations
   $LocalComputerDrives = (Get-Volume | Where-Object { $_.OperationalStatus -like 'ok' -and $_.DriveLetter -notlike $null }).DriveLetter
   # Test if each location is a valid path on the system, if not remove it from the list
-  foreach ($DellOMLocation in $DellOMLocations) {
-    if (Test-Path -Path $DellOMLocation) {
+  foreach ($DellOMLocation in $DellOMLocations)
+  {
+    if (Test-Path -Path $DellOMLocation)
+    {
       $ValidDellOMLocations += $DellOMLocation
     }
   }
   # If more than one location was valid give an error
-  if ($ValidDellOMLocations.Count -gt 1) {
+  if ($ValidDellOMLocations.Count -gt 1)
+  {
     $ErrorMessage = @(
       # General error message
       'Error Detected: Found more than one installation location for Dell OpenManage'
@@ -25,19 +29,24 @@ function Get-OMReportPath {
     )
   }
   # If one location was valid than set variable to return at the end of the function
-  elseif ($ValidDellOMLocations.Count -eq 1) {
+  elseif ($ValidDellOMLocations.Count -eq 1)
+  {
     $DellOMReportPath = $ValidDellOMLocations
   }
   # If no locations were valid than search all local drive letters found using earlier '$LocalComputerDrives' command
-  elseif ($ValidDellOMLocations.Count -eq 0) {
-    foreach ($DriveLetter in $LocalComputerDrives) {
+  elseif ($ValidDellOMLocations.Count -eq 0)
+  {
+    foreach ($DriveLetter in $LocalComputerDrives)
+    {
       # Add colon to each drive letter so the path has correct syntax
       $DriveLetter = $DriveLetter + ':'
       # Scan path provided by '$DriveLetter' for the 'omreport.exe'
-      try {
+      try
+      {
         $DellOMReportPath = (Get-ChildItem -Path $DriveLetter -Include *omreport.exe -Recurse -ErrorAction SilentlyContinue).FullName
       }
-      catch {
+      catch
+      {
         $ErrorMessage = @(
           'Error Detected'
           $_.Exception.Message
@@ -45,33 +54,40 @@ function Get-OMReportPath {
         )
       }
       # If search found a valid path than break out of for loop
-      if (Test-Path -Path $DellOMReportPath) {
+      if (Test-Path -Path $DellOMReportPath)
+      {
         break
       }
       # If search didn't find a valid path than continue for loop
-      else {
+      else
+      {
         continue
       }
     }
   }
   # If no errors were found return installation path
-  if ($ErrorMessage.Count -eq 0) {
+  if ($ErrorMessage.Count -eq 0)
+  {
     return $DellOMReportPath
   }
   # Else print error message and exit
-  else {
+  else
+  {
     Write-Output $ErrorMessage
     Exit
   }
 }
 
 # Pull raid controller information
-function Get-ControllerObject {
-  try {
+function Get-ControllerObject
+{
+  try
+  {
     $DellOMReportPath = Get-OMReportPath
     $ControllerObject = & "$DellOMReportPath" storage pdisk controller=0
   }
-  catch {
+  catch
+  {
     $ErrorMessage = @(
       'Error Detected'
       $_.Exception.Message
@@ -79,11 +95,13 @@ function Get-ControllerObject {
     )
   }
   # If no errors were found return installation path
-  if ($ErrorMessage.Count -eq 0) {
+  if ($ErrorMessage.Count -eq 0)
+  {
     return $ControllerObject
   }
   # Else print error message and exit
-  else {
+  else
+  {
     Write-Output $ErrorMessage
     Exit
   }
@@ -91,9 +109,17 @@ function Get-ControllerObject {
 
 # Function created based off https://stackoverflow.com/questions/662379/calculate-date-from-week-number/9064954#9064954
 # Convert day of week, week of year, and year date information to standard date stamp
-Function Get-DiskManufactureDate {
-  param([int]$DayOfWeek, [int]$WeekOfYear, [int]$Year)
-  try {
+Function Get-DiskManufactureDate
+{
+  param
+  (
+    [int]$DayOfWeek,
+    [int]$WeekOfYear,
+    [int]$Year
+  )
+
+  try
+  {
     $Jan1 = [DateTime]"$Year-01-01"
     $DaysOffset = ([DayOfWeek]::Thursday - $Jan1.DayOfWeek)
     $FirstThursday = $Jan1.AddDays($DaysOffset)
@@ -103,7 +129,8 @@ Function Get-DiskManufactureDate {
     if ($FirstWeek -le 1) { $WeekNumber -= 1 }
     $ManufactureDate = ($FirstThursday.AddDays($WeekNumber * 7)).AddDays($DayOfWeek - 4)
   }
-  catch {
+  catch
+  {
     $ErrorMessage = @(
       'Error Detected'
       $_.Exception.Message
@@ -111,19 +138,25 @@ Function Get-DiskManufactureDate {
     )
   }
   # If no errors were found return installation path
-  if ($ErrorMessage.Count -eq 0) {
+  if ($ErrorMessage.Count -eq 0)
+  {
     return $ManufactureDate
   }
   # Else print error message and exit
-  else {
+  else
+  {
     Write-Output $ErrorMessage
     Exit
   }
 }
 
 # Generate information about a disk when provided the disk ID
-function Get-DiskInfo {
-  param([int]$DiskID)
+function Get-DiskInfo
+{
+  param
+  (
+    [int]$DiskID
+  )
   # Find disk in '$Disks' using disk ID
   $Disk = $Disks | Where-Object { $_.ID -like $DiskID }
   # Set day, week, and year variables from disk information
@@ -131,16 +164,20 @@ function Get-DiskInfo {
   $Week = $Disk.ManufactureWeek
   $Year = $Disk.ManufactureYear
   # If manufacture dates are not available than set variable to check
-  if ($Day -like "*not a*" -and $Week -like "*not a*" -and $Year -like "*not a*") {
+  if ($Day -like "*not a*" -and $Week -like "*not a*" -and $Year -like "*not a*")
+  {
     $ValidManufactureDate = $False
   }
-  else {
-    try {
+  else
+  {
+    try
+    {
       $ManufactureDate = (Get-DiskManufactureDate -DayOfWeek $Day -WeekOfYear $Week -Year $Year).ToString('MM/dd/yyyy')
       $AgeOfDisk = ((New-TimeSpan -Start $(Get-Date) -End $ManufactureDate).Days * -1)
       $ValidManufactureDate = $True
     }
-    catch {
+    catch
+    {
       $ErrorMessage = @(
         'Error Detected'
         $_.Exception.Message
@@ -150,52 +187,65 @@ function Get-DiskInfo {
   }
   # Structure disk information as an array of strings
   $DiskInfo = @(
-    if ($Disk.VendorID -notlike $null) {
+    if ($Disk.VendorID -notlike $null)
+    {
       "Vendor ID: $($Disk.VendorID)"
     }
-    else {
+    else
+    {
       "Vendor ID: Not Available"
     }
-    if ($Disk.ProductID -notlike $null) {
+    if ($Disk.ProductID -notlike $null)
+    {
       "Product ID: $($Disk.ProductID)"
     }
-    else {
+    else
+    {
       "Product ID: Not Available"
     }
-    if ($Disk.SerialNumber -notlike $null) {
+    if ($Disk.SerialNumber -notlike $null)
+    {
       "Serial Number: $($Disk.SerialNumber)"
     }
-    else {
+    else
+    {
       "Serial Number: Not Available"
     }
-    if ($Disk.PartNumber -notlike $null) {
+    if ($Disk.PartNumber -notlike $null)
+    {
       "Part Number: $($Disk.PartNumber)"
     }
-    else {
+    else
+    {
       "Part Number: Not Available"
     }
     # Check if manufacture dates are available
-    if ($ValidManufactureDate) {
+    if ($ValidManufactureDate)
+    {
       "Estimated Date of Manufacture: $($ManufactureDate)"
       "Estimated Age of Disk: $($AgeOfDisk) days"
     }
-    else {
+    else
+    {
       "Estimated Date of Manufacture: Not Available"
       "Estimated Age of Disk: Not Available"
     }
   )
   # If no errors were found return installation path
-  if ($ErrorMessage.Count -eq 0) {
+  if ($ErrorMessage.Count -eq 0)
+  {
     return $DiskInfo
   }
   # Else print error message and exit
-  else {
+  else
+  {
     Write-Output $ErrorMessage
     Exit
   }
 }
 
-try {
+try
+{
   # Gather raid controller information
   $ControllerObject = Get-ControllerObject
 
@@ -204,11 +254,14 @@ try {
 
   # Count number lines that have values to parse for disk smart data
   $LineCount = 0
-  for ($i = 3; $i -lt $ControllerObject.Count; $i++) {
-    if (-not ([string]::IsNullOrEmpty($ControllerObject[$i]) -or [string]::IsNullOrWhiteSpace($ControllerObject[$i]))) {
+  for ($i = 3; $i -lt $ControllerObject.Count; $i++)
+  {
+    if (-not ([string]::IsNullOrEmpty($ControllerObject[$i]) -or [string]::IsNullOrWhiteSpace($ControllerObject[$i])))
+    {
       $LineCount++
     }
-    else {
+    else
+    {
       break
     }
   }
@@ -218,14 +271,17 @@ try {
   # Create main array object for all child disk objects
   $Disks = @()
 
-  for ($i = 0; $i -lt $DiskCount; $i++) {
+  for ($i = 0; $i -lt $DiskCount; $i++)
+  {
     # Create disk object to house smart data
     $DiskObject = New-Object System.Object
     # Parse and section each line into name and value
-    foreach ($Line in $ControllerObject[$LineStart..$LineEnd]) {
+    foreach ($Line in $ControllerObject[$LineStart..$LineEnd])
+    {
       $LineName = ($Line -replace ':.*$?').Trim().replace(' ', '')
       # Remove 'No.' and replace with 'Number' for cleaner text
-      if ($LineName.EndsWith('No.')) {
+      if ($LineName.EndsWith('No.'))
+      {
         $LineName = ($LineName.Trim('No.')).Trim() + 'Number'
       }
       $LineValue = ($Line -replace '^.*?:').Trim()
@@ -241,7 +297,8 @@ try {
   }
 
   # Clean ID and name of each disk
-  foreach ($Disk in $Disks) {
+  foreach ($Disk in $Disks)
+  {
     # Convert 0:1:1 formatting of controller:disk ID to 1
     $Disk.ID = (($Disk.ID).Split(':')[-1]).Trim()
     # Keep naming of disk whether physical or virtual, remove 0:1:1 formatting
@@ -252,8 +309,10 @@ try {
   # Check if disks are certified for use in Dell systems
   $DiskCertifiedObjects = $Disks | Where-Object { $_.Certified -notlike 'yes' }
   # If there are uncertified disks
-  if ($DiskCertifiedObjects.Count -gt 0) {
-    foreach ($DiskCertifiedObject in $DiskCertifiedObjects) {
+  if ($DiskCertifiedObjects.Count -gt 0)
+  {
+    foreach ($DiskCertifiedObject in $DiskCertifiedObjects)
+    {
       # Build body of email
       $Message = @(
         "Disk $($DiskCertifiedObject.ID) may not be certified for use in Dell systems."
@@ -270,8 +329,10 @@ try {
   # Check for status that aren't normal
   $DiskStatusObjects = $Disks | Where-Object { $_.Status -notlike 'ok' -and $_.Status -notlike 'non-critical' }
   # If there is a non-normal status
-  if ($DiskStatusObjects.Count -gt 0) {
-    foreach ($DiskStatusObject in $DiskStatusObjects) {
+  if ($DiskStatusObjects.Count -gt 0)
+  {
+    foreach ($DiskStatusObject in $DiskStatusObjects)
+    {
       # Build body of email
       $Message = @(
         "Disk $($DiskStatusObject.ID) status not ok."
@@ -286,8 +347,10 @@ try {
 
   $DiskPredictionObjects = $Disks | Where-Object { $_.FailurePredicted -notlike 'no' }
   # If there are predictions
-  if ($DiskPredictionObjects.Count -gt 0) {
-    foreach ($DiskPredictionObject in $DiskPredictionObjects) {
+  if ($DiskPredictionObjects.Count -gt 0)
+  {
+    foreach ($DiskPredictionObject in $DiskPredictionObjects)
+    {
       # Build body of email
       $Message = @(
         "Disk $($DiskPredictionObject.ID) failure predicted."
@@ -305,32 +368,40 @@ try {
     'Dell OpenManage has reported the following:'
   )
 }
-catch {
+catch
+{
   $ErrorMessage = @(
     'Error Detected'
     $_.Exception.Message
     $_.Exception.ItemName
   )
 }
-finally {
+finally
+{
   # If no errors were found return installation path
-  if ($ErrorMessage.Count -eq 0) {
+  if ($ErrorMessage.Count -eq 0)
+  {
     # If there are disk issues
-    if ($DiskIssues.Count -eq 0) {
-      if ($DiskCount -eq 0) {
+    if ($DiskIssues.Count -eq 0)
+    {
+      if ($DiskCount -eq 0)
+      {
         Write-Output "No disks found."
         Exit
       }
-      elseif ($DiskCount -eq 1) {
+      elseif ($DiskCount -eq 1)
+      {
         Write-Output "Found $DiskCount disk. No issues were detected."
         Exit
       }
-      elseif ($DiskCount -gt 1) {
+      elseif ($DiskCount -gt 1)
+      {
         Write-Output "Found $DiskCount disks. No issues were detected."
         Exit
       }
     }
-    elseif ($DiskIssues.Count -gt 0) {
+    elseif ($DiskIssues.Count -gt 0)
+    {
       # "`n" means print new line
       $DiskIssues = $DellHeaderMessage, "`n", $DiskIssues
       Write-Output $DiskIssues.Trim()
@@ -338,7 +409,8 @@ finally {
     }
   }
   # Else print error message and exit
-  else {
+  else
+  {
     Write-Output $ErrorMessage
     Exit
   }

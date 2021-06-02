@@ -1,0 +1,10 @@
+[Unit]
+Description=OS Essentials borg backup
+
+[Service]
+Type=simple
+Nice=19
+IOSchedulingClass=2
+IOSchedulingPrioity=7
+ExecStartPre=/usr/bin/borg break-lock $REPOSITORY
+ExecStart=/home/hunter/bin/borg/os-essentials-backup.sh

@@ -4,11 +4,13 @@ import shutil
 
 
 def main():
-    search_directory_set = check_path('Which directory would you like to search (recursively)? ')
+    search_directory_set = check_path(
+        'Which directory would you like to search (recursively)? ')
     files_found = walk_the_path(search_directory_set)
     gif_files, picture_files, video_files = sort_files(files_found)
     list_files(gif_files, picture_files, video_files)
-    create_directories(gif_files, picture_files, video_files, search_directory_set)
+    create_directories(gif_files, picture_files,
+                       video_files, search_directory_set)
     move_files(gif_files, picture_files, video_files, search_directory_set)
     remove_empty_folders(search_directory_set)
     terminate()
@@ -95,23 +97,29 @@ def create_directories(gif_dictionary, picture_dictionary, video_dictionary, val
             if not os.path.exists(os.path.join(valid_directory, 'gifs')):
                 os.makedirs(os.path.join(valid_directory, 'gifs'))
                 if os.path.exists(os.path.join(valid_directory, 'gifs')):
-                    print(f'Successfully created folder: {os.path.join(valid_directory, "gifs")}')
+                    print(
+                        f'Successfully created folder: {os.path.join(valid_directory, "gifs")}')
                 else:
-                    print(f'Failed to create folder: {os.path.join(valid_directory, "gifs")}')
+                    print(
+                        f'Failed to create folder: {os.path.join(valid_directory, "gifs")}')
         if len(picture_dictionary) >= 1:
             if not os.path.exists(os.path.join(valid_directory, 'pictures')):
                 os.makedirs(os.path.join(valid_directory, 'pictures'))
                 if os.path.exists(os.path.join(valid_directory, 'pictures')):
-                    print(f'Successfully created folder: {os.path.join(valid_directory, "pictures")}')
+                    print(
+                        f'Successfully created folder: {os.path.join(valid_directory, "pictures")}')
                 else:
-                    print(f'Failed to create folder: {os.path.join(valid_directory, "pictures")}')
+                    print(
+                        f'Failed to create folder: {os.path.join(valid_directory, "pictures")}')
         if len(video_dictionary) >= 1:
             if not os.path.exists(os.path.join(valid_directory, 'videos')):
                 os.makedirs(os.path.join(valid_directory, 'videos'))
                 if os.path.exists(os.path.join(valid_directory, 'videos')):
-                    print(f'Successfully created folder: {os.path.join(valid_directory, "videos")}')
+                    print(
+                        f'Successfully created folder: {os.path.join(valid_directory, "videos")}')
                 else:
-                    print(f'Failed to create folder: {os.path.join(valid_directory, "videos")}')
+                    print(
+                        f'Failed to create folder: {os.path.join(valid_directory, "videos")}')
 
 
 def move_files(gif_dictionary, picture_dictionary, video_dictionary, valid_directory_set):
@@ -120,23 +128,29 @@ def move_files(gif_dictionary, picture_dictionary, video_dictionary, valid_direc
             for file, root in gif_dictionary.items():
                 if shutil.move((os.path.join(root, file)), (os.path.join(valid_directory, "gifs", file))):
                     if os.path.exists(os.path.join(valid_directory, "gifs", file)):
-                        print(f'Successfully moved file: {os.path.join(valid_directory, "gifs", file)}')
+                        print(
+                            f'Successfully moved file: {os.path.join(valid_directory, "gifs", file)}')
                     else:
-                        print(f'Failed to move file: {os.path.join(root, "gifs", file)}')
+                        print(
+                            f'Failed to move file: {os.path.join(root, "gifs", file)}')
         if len(picture_dictionary) >= 1:
             for file, root in picture_dictionary.items():
                 if shutil.move((os.path.join(root, file)), (os.path.join(valid_directory, "pictures", file))):
                     if os.path.exists(os.path.join(valid_directory, "pictures", file)):
-                        print(f'Successfully moved file: {os.path.join(valid_directory, "pictures", file)}')
+                        print(
+                            f'Successfully moved file: {os.path.join(valid_directory, "pictures", file)}')
                     else:
-                        print(f'Failed to move file: {os.path.join(root, "pictures", file)}')
+                        print(
+                            f'Failed to move file: {os.path.join(root, "pictures", file)}')
         if len(video_dictionary) >= 1:
             for file, root in video_dictionary.items():
                 if shutil.move((os.path.join(root, file)), (os.path.join(valid_directory, "videos", file))):
                     if os.path.exists(os.path.join(valid_directory, "videos", file)):
-                        print(f'Successfully moved file: {os.path.join(valid_directory, "videos", file)}')
+                        print(
+                            f'Successfully moved file: {os.path.join(valid_directory, "videos", file)}')
                     else:
-                        print(f'Failed to move file: {os.path.join(root, "videos", file)}')
+                        print(
+                            f'Failed to move file: {os.path.join(root, "videos", file)}')
 
 
 def remove_empty_folders(valid_directory_set):
@@ -144,7 +158,8 @@ def remove_empty_folders(valid_directory_set):
         for root, subdirectories, files in os.walk(valid_directory, topdown=False):
             for subdirectory in subdirectories:
                 try:
-                    os.rmdir(os.path.realpath(os.path.join(root, subdirectory)))
+                    os.rmdir(os.path.realpath(
+                        os.path.join(root, subdirectory)))
                 except OSError:
                     pass
 

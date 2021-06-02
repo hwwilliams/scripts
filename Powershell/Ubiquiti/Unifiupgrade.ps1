@@ -9,30 +9,39 @@ $SiteCode = '<Site Code>' #you can enter each site here. This way when you assig
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 $controller = "https://$($URL):$($port)"
 $credential = "`{`"username`":`"$User`",`"password`":`"$Pass`"`}"
-try {
+try
+{
   $null = Invoke-Restmethod -Uri "$controller/api/login" -method post -body $credential -ContentType "application/json; charset=utf-8"  -SessionVariable myWebSession
 }
-catch {
+catch
+{
   $APIerror = "Api Connection Error: $($_.Exception.Message)"
 }
-try {
+try
+{
   $APIResult = Invoke-Restmethod -Uri "$controller/api/s/$SiteCode/stat/device/" -WebSession $myWebSession
 }
-catch {
+catch
+{
   $APIerror = "Query Failed: $($_.Exception.Message)"
 }
 
 $AllSites = Invoke-RestMethod -Uri "$controller/api/self/sites" -WebSession $myWebSession
-foreach ($site in $AllSites.data) {
-  try {
+foreach ($site in $AllSites.data)
+{
+  try
+  {
     $siteIDFromList = ($site.name)
     $APIResult = Invoke-Restmethod -Uri "$controller/api/s/$siteIDFromList/stat/device/" -WebSession $myWebSession
   }
-  catch {
+  catch
+  {
     $APIerror += "`nGet Devices for $siteIDFromList Failed: $($_.Exception.Message)"
   }
-  foreach ($Device in $APIResult.data | where-object { $_.upgradable -eq "true" }) {
-    try {
+  foreach ($Device in $APIResult.data | where-object { $_.upgradable -eq "true" })
+  {
+    try
+    {
       $cmd = @"
                 {
                 "cmd":"upgrade",
@@ -41,7 +50,8 @@ foreach ($site in $AllSites.data) {
 "@
       $upgrade = Invoke-RestMethod -Uri "$controller/api/s/$siteIDFromList/cmd/devmgr" -Method post -Body $cmd -WebSession $myWebSession -ErrorAction SilentlyContinue
     }
-    catch {
+    catch
+    {
       $UpgradeError = "Upgrade Failed for device $($device.name) with MAC $($Device.mac) : $($_.Exception.Message)"
     }
   }
